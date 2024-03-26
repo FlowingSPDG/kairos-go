@@ -29,6 +29,22 @@ func (k *KairosRestClient) setHeaders(req *http.Request) {
 	req.Header.Set("Accept", "application/json")
 }
 
+func (k *KairosRestClient) doRequest(req *http.Request, response any) error {
+	k.setHeaders(req)
+
+	resp, err := k.c.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if err := json.NewDecoder(resp.Body).Decode(response); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 type getScenePayload []Scene
 
 type Scene struct {
@@ -56,19 +72,8 @@ func (k *KairosRestClient) GetScene() (getScenePayload, error) {
 		return nil, err
 	}
 
-	// 認証情報の設定
-	k.setHeaders(req)
-
-	// リクエストの送信
-	resp, err := k.c.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	// レスポンスのデコード
 	var payload getScenePayload
-	if err := json.NewDecoder(resp.Body).Decode(&payload); err != nil {
+	if err := k.doRequest(req, &payload); err != nil {
 		return nil, err
 	}
 	return payload, nil
@@ -106,25 +111,14 @@ func (k *KairosRestClient) PatchScene(sceneUuid, layerUuid, a, b string, sources
 		return err
 	}
 
-	k.setHeaders(req)
-
-	resp, err := k.c.Do(req)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
 	var response patchSceneResponsePayload
-	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
+	if err := k.doRequest(req, &response); err != nil {
 		return err
 	}
-
 	if response.Code != 200 {
 		return errors.New(response.Text)
 	}
-
 	return nil
-
 }
 
 type Macro struct {
@@ -146,22 +140,11 @@ func (k *KairosRestClient) GetMacros() (getMacrosPayload, error) {
 		return nil, err
 	}
 
-	// 認証情報の設定
-	k.setHeaders(req)
-
-	// リクエストの送信
-	resp, err := k.c.Do(req)
-	if err != nil {
+	var response getMacrosPayload
+	if err := k.doRequest(req, &response); err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
-
-	// レスポンスのデコード
-	var payload getMacrosPayload
-	if err := json.NewDecoder(resp.Body).Decode(&payload); err != nil {
-		return nil, err
-	}
-	return payload, nil
+	return response, nil
 }
 
 type patchMacroRequestPayload struct {
@@ -188,25 +171,12 @@ func (k *KairosRestClient) PatchMacro(macroUuid, state string) error {
 		return err
 	}
 
-	k.setHeaders(req)
-
-	resp, err := k.c.Do(req)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
 	var response patchMacroResponsePayload
-	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
+	if err := k.doRequest(req, &response); err != nil {
 		return err
 	}
-
 	if response.Code != 200 {
 		return errors.New(response.Text)
 	}
-
 	return nil
-
 }
-
-// TODO: generics
