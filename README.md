@@ -1,2 +1,4 @@
 # kairos-go
 Panasonic Kairos Rest API library for Go
+
+Delegation = Scene
