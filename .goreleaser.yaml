@@ -19,7 +19,10 @@ builds:
   - env:
       - CGO_ENABLED=0
       - GO_CMD_MAIN={{ .Env.GO_CMD_MAIN }}
-      - GOOS={{ .Env.GOOS }}
+    goos:
+      - linux
+      - windows
+      - darwin
     
     # Makefileにしたくね？
     main: >-
