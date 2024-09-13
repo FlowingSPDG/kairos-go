@@ -64,4 +64,4 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GO_CMD_MAIN: ${{ matrix.main }}
         with:
-          args: build --auto-snapshot --clean
+          args: build --snapshot --clean

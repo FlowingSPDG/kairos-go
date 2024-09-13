@@ -18,6 +18,7 @@ before:
 builds:
   - env:
       - CGO_ENABLED=0
+      - GO_CMD_MAIN={{ .Env.GO_CMD_MAIN }}
     goos:
       - linux
       - windows
