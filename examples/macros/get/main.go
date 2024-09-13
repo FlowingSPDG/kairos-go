@@ -1,19 +1,27 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
+	"os/signal"
 
 	"github.com/FlowingSPDG/kairos-go"
 )
 
+var (
+	user     = os.Getenv("KAIROS_USER")
+	password = os.Getenv("KAIROS_PASSWORD")
+	ip       = os.Getenv("KAIROS_IP")
+)
+
 func main() {
-	user := os.Getenv("KAIROS_USER")
-	password := os.Getenv("KAIROS_PASSWORD")
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer stop()
 
-	kc := kairos.NewKairosRestClient("192.168.10.10", user, password)
+	kc := kairos.NewKairosRestClient(ip, user, password)
 
-	macros, err := kc.GetMacros()
+	macros, err := kc.GetMacros(ctx)
 	if err != nil {
 		panic(err)
 	}

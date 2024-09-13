@@ -2,14 +2,36 @@ package kairos
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net"
 	"net/http"
+
+	"golang.org/x/xerrors"
 )
 
-type KairosRestClient struct {
+type KairosRestClient interface {
+	GetAuxByID(ctx context.Context, id string) error
+	GetAuxByNumber(ctx context.Context, number int) error
+	GetAuxs(ctx context.Context) error
+	GetInputByID(ctx context.Context, id string) (*Input, error)
+	GetInputByNumber(ctx context.Context, number int) (*Input, error)
+	GetInputs(ctx context.Context) ([]Input, error)
+	GetMacro(ctx context.Context, id string) (*Macro, error)
+	GetMacros(ctx context.Context) ([]Macro, error)
+	GetMultiviewer(ctx context.Context, mv string) error
+	GetMultiviewers(ctx context.Context) error
+	GetScene(ctx context.Context, scene string) (*Scene, error)
+	GetScenes(ctx context.Context) ([]Scene, error)
+	PatchAux() error
+	PatchMacro(macroUuid string, state string) error
+	PatchMultiviewer() error
+	PatchScene(sceneUuid string, layerUuid string, a string, b string, sources []string) error
+	PatchSnapshot() error
+}
+
+type kairosRestClient struct {
 	ip       string
 	port     string
 	c        *http.Client
@@ -17,8 +39,8 @@ type KairosRestClient struct {
 	password string
 }
 
-func NewKairosRestClient(ip, user, password string) *KairosRestClient {
-	return &KairosRestClient{
+func NewKairosRestClient(ip, user, password string) KairosRestClient {
+	return &kairosRestClient{
 		ip:       ip,
 		c:        &http.Client{},
 		user:     user,
@@ -26,13 +48,13 @@ func NewKairosRestClient(ip, user, password string) *KairosRestClient {
 	}
 }
 
-func (k *KairosRestClient) setHeaders(req *http.Request) {
+func (k *kairosRestClient) setHeaders(req *http.Request) {
 	req.SetBasicAuth(k.user, k.password)
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
 }
 
-func (k *KairosRestClient) doRequest(req *http.Request, response any) error {
+func (k *kairosRestClient) doRequest(req *http.Request, response any) error {
 	k.setHeaders(req)
 
 	resp, err := k.c.Do(req)
@@ -48,14 +70,10 @@ func (k *KairosRestClient) doRequest(req *http.Request, response any) error {
 	return nil
 }
 
-type getScenePayload []Scene
-
-func (k *KairosRestClient) GetInputs() ([]Input, error) {
-	// TODO: context
-
+func (k *kairosRestClient) GetInputs(ctx context.Context) ([]Input, error) {
 	// エンドポイントの設定
 	ep := fmt.Sprintf("http://%s/inputs", net.JoinHostPort(k.ip, k.port))
-	req, err := http.NewRequest("GET", ep, nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", ep, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -68,10 +86,11 @@ func (k *KairosRestClient) GetInputs() ([]Input, error) {
 	return payload, nil
 }
 
-func (k *KairosRestClient) GetInput(input string) (*Input, error) {
-	// input=id or number
-	// TODO: context
+type InputIdentifier interface {
+	~int | ~string
+}
 
+func getInput[T InputIdentifier](ctx context.Context, k *kairosRestClient, input T) (*Input, error) {
 	// エンドポイントの設定
 	ep := fmt.Sprintf("http://%s/inputs/%s", net.JoinHostPort(k.ip, k.port), input)
 	req, err := http.NewRequest("GET", ep, nil)
@@ -87,12 +106,18 @@ func (k *KairosRestClient) GetInput(input string) (*Input, error) {
 	return &payload, nil
 }
 
-func (k *KairosRestClient) GetMacros() ([]Macro, error) {
-	// TODO: context
+func (k *kairosRestClient) GetInputByID(ctx context.Context, id string) (*Input, error) {
+	return getInput(ctx, k, id)
+}
 
+func (k *kairosRestClient) GetInputByNumber(ctx context.Context, number int) (*Input, error) {
+	return getInput(ctx, k, number)
+}
+
+func (k *kairosRestClient) GetMacros(ctx context.Context) ([]Macro, error) {
 	// エンドポイントの設定
 	ep := fmt.Sprintf("http://%s/macros", net.JoinHostPort(k.ip, k.port))
-	req, err := http.NewRequest("GET", ep, nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", ep, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -104,12 +129,10 @@ func (k *KairosRestClient) GetMacros() ([]Macro, error) {
 	return response, nil
 }
 
-func (k *KairosRestClient) GetMacro(id string) (*Macro, error) {
-	// TODO: context
-
+func (k *kairosRestClient) GetMacro(ctx context.Context, id string) (*Macro, error) {
 	// エンドポイントの設定
 	ep := fmt.Sprintf("http://%s/macros/%s", net.JoinHostPort(k.ip, k.port), id)
-	req, err := http.NewRequest("GET", ep, nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", ep, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -121,17 +144,15 @@ func (k *KairosRestClient) GetMacro(id string) (*Macro, error) {
 	return &response, nil
 }
 
-func (k *KairosRestClient) GetAuxs() error {
-	// input=id or number
-	// TODO: context
-
+func (k *kairosRestClient) GetAuxs(ctx context.Context) error {
 	// エンドポイントの設定
 	ep := fmt.Sprintf("http://%s/aux", net.JoinHostPort(k.ip, k.port))
-	req, err := http.NewRequest("GET", ep, nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", ep, nil)
 	if err != nil {
 		return err
 	}
 
+	// TODO: type
 	var payload map[string]any
 	if err := k.doRequest(req, &payload); err != nil {
 		return err
@@ -141,17 +162,22 @@ func (k *KairosRestClient) GetAuxs() error {
 	return nil
 }
 
-func (k *KairosRestClient) GetAux(aux string) error {
+type AuxIdentifier interface {
+	~int | ~string
+}
+
+func getAux[T AuxIdentifier](ctx context.Context, k *kairosRestClient, aux T) error {
 	// input=id or number
 	// TODO: context
 
 	// エンドポイントの設定
 	ep := fmt.Sprintf("http://%s/aux/%s", net.JoinHostPort(k.ip, k.port), aux)
-	req, err := http.NewRequest("GET", ep, nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", ep, nil)
 	if err != nil {
 		return err
 	}
 
+	// TODO: type
 	var payload map[string]any
 	if err := k.doRequest(req, &payload); err != nil {
 		return err
@@ -161,13 +187,18 @@ func (k *KairosRestClient) GetAux(aux string) error {
 	return nil
 }
 
-func (k *KairosRestClient) GetMultiviewers() error {
-	// input=id or number
-	// TODO: context
+func (k *kairosRestClient) GetAuxByID(ctx context.Context, id string) error {
+	return getAux(ctx, k, id)
+}
 
+func (k *kairosRestClient) GetAuxByNumber(ctx context.Context, number int) error {
+	return getAux(ctx, k, number)
+}
+
+func (k *kairosRestClient) GetMultiviewers(ctx context.Context) error {
 	// エンドポイントの設定
 	ep := fmt.Sprintf("http://%s/multiviewers", net.JoinHostPort(k.ip, k.port))
-	req, err := http.NewRequest("GET", ep, nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", ep, nil)
 	if err != nil {
 		return err
 	}
@@ -181,13 +212,12 @@ func (k *KairosRestClient) GetMultiviewers() error {
 	return nil
 }
 
-func (k *KairosRestClient) GetMultiviewer(mv string) error {
-	// input=id or number
-	// TODO: context
+func (k *kairosRestClient) GetMultiviewer(ctx context.Context, mv string) error {
+	// input=id or number?
 
 	// エンドポイントの設定
 	ep := fmt.Sprintf("http://%s/multiviewers/%s", net.JoinHostPort(k.ip, k.port), mv)
-	req, err := http.NewRequest("GET", ep, nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", ep, nil)
 	if err != nil {
 		return err
 	}
@@ -201,12 +231,10 @@ func (k *KairosRestClient) GetMultiviewer(mv string) error {
 	return nil
 }
 
-func (k *KairosRestClient) GetScenes() ([]Scene, error) {
-	// TODO: context
-
+func (k *kairosRestClient) GetScenes(ctx context.Context) ([]Scene, error) {
 	// エンドポイントの設定
 	ep := fmt.Sprintf("http://%s/scenes", net.JoinHostPort(k.ip, k.port))
-	req, err := http.NewRequest("GET", ep, nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", ep, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -218,12 +246,12 @@ func (k *KairosRestClient) GetScenes() ([]Scene, error) {
 	return payload, nil
 }
 
-func (k *KairosRestClient) GetScene(scene string) (*Scene, error) {
+func (k *kairosRestClient) GetScene(ctx context.Context, scene string) (*Scene, error) {
 	// TODO: context
 
 	// エンドポイントの設定
 	ep := fmt.Sprintf("http://%s/scenes", net.JoinHostPort(k.ip, k.port))
-	req, err := http.NewRequest("GET", ep, nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", ep, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -248,7 +276,7 @@ type patchSceneResponsePayload struct {
 	Text string `json:"text"`
 }
 
-func (k *KairosRestClient) PatchScene(sceneUuid, layerUuid, a, b string, sources []string) error {
+func (k *kairosRestClient) PatchScene(sceneUuid, layerUuid, a, b string, sources []string) error {
 	payload := patchSceneRequestPayload{
 		Name:    "Background",
 		SourceA: a,
@@ -261,7 +289,7 @@ func (k *KairosRestClient) PatchScene(sceneUuid, layerUuid, a, b string, sources
 		return err
 	}
 
-	ep := "http://" + k.ip + ":1234/scenes/" + sceneUuid + "/" + layerUuid
+	ep := fmt.Sprintf("http://%s/scenes/%s/%s", net.JoinHostPort(k.ip, k.port), sceneUuid, layerUuid)
 	req, err := http.NewRequest("PATCH", ep, &buf)
 	if err != nil {
 		return err
@@ -272,7 +300,7 @@ func (k *KairosRestClient) PatchScene(sceneUuid, layerUuid, a, b string, sources
 		return err
 	}
 	if response.Code != 200 {
-		return errors.New(response.Text)
+		return xerrors.New(response.Text)
 	}
 	return nil
 }
@@ -286,7 +314,7 @@ type patchMacroResponsePayload struct {
 	Text string `json:"text"`
 }
 
-func (k *KairosRestClient) PatchMacro(macroUuid, state string) error {
+func (k *kairosRestClient) PatchMacro(macroUuid, state string) error {
 	payload := patchMacroRequestPayload{
 		State: state,
 	}
@@ -306,19 +334,19 @@ func (k *KairosRestClient) PatchMacro(macroUuid, state string) error {
 		return err
 	}
 	if response.Code != 200 {
-		return errors.New(response.Text)
+		return xerrors.New(response.Text)
 	}
 	return nil
 }
 
-func (k *KairosRestClient) PatchSnapshot() error {
+func (k *kairosRestClient) PatchSnapshot() error {
 	panic("TODO")
 }
 
-func (k *KairosRestClient) PatchAux() error {
+func (k *kairosRestClient) PatchAux() error {
 	panic("TODO")
 }
 
-func (k *KairosRestClient) PatchMultiviewer() error {
+func (k *kairosRestClient) PatchMultiviewer() error {
 	panic("TODO")
 }
