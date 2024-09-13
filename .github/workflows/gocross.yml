@@ -61,6 +61,7 @@ jobs:
       - name: Build
         uses: goreleaser/goreleaser-action@v6
         env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GO_CMD_MAIN: ${{ matrix.main }}
         with:
-          args: --auto-snapshot --clean
+          args: build --auto-snapshot --clean
