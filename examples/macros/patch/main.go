@@ -26,7 +26,7 @@ func main() {
 	}
 
 	macro := macros[0]
-	if err := kc.PatchMacro(macro.UUID, "play"); err != nil {
+	if err := kc.PatchMacro(ctx, macro.UUID, "play"); err != nil {
 		panic(err)
 	}
 }

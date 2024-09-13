@@ -12,23 +12,34 @@ import (
 )
 
 type KairosRestClient interface {
-	GetAuxByID(ctx context.Context, id string) error
-	GetAuxByNumber(ctx context.Context, number int) error
-	GetAuxs(ctx context.Context) error
+	// AUX
+	GetAuxByID(ctx context.Context, id string) (map[string]any, error)
+	GetAuxByNumber(ctx context.Context, number int) (map[string]any, error)
+	GetAuxs(ctx context.Context) (map[string]any, error)
+	// PatchAux(ctx context.Context) error
+
+	// Inputs
 	GetInputByID(ctx context.Context, id string) (*Input, error)
 	GetInputByNumber(ctx context.Context, number int) (*Input, error)
 	GetInputs(ctx context.Context) ([]Input, error)
+
+	// Macros
 	GetMacro(ctx context.Context, id string) (*Macro, error)
 	GetMacros(ctx context.Context) ([]Macro, error)
-	GetMultiviewer(ctx context.Context, mv string) error
-	GetMultiviewers(ctx context.Context) error
+	PatchMacro(ctx context.Context, macroUuid string, state string) error
+
+	// Multiviewers
+	GetMultiviewer(ctx context.Context, mv string) (map[string]any, error)
+	GetMultiviewers(ctx context.Context) (map[string]any, error)
+	// PatchMultiviewer(ctx context.Context) error
+
+	// Scenes
 	GetScene(ctx context.Context, scene string) (*Scene, error)
 	GetScenes(ctx context.Context) ([]Scene, error)
-	PatchAux() error
-	PatchMacro(macroUuid string, state string) error
-	PatchMultiviewer() error
-	PatchScene(sceneUuid string, layerUuid string, a string, b string, sources []string) error
-	PatchSnapshot() error
+	PatchScene(ctx context.Context, sceneUuid string, layerUuid string, a string, b string, sources []string) error
+
+	// Snapshot
+	// PatchSnapshot(ctx context.Context) error
 }
 
 type kairosRestClient struct {
@@ -59,7 +70,7 @@ func (k *kairosRestClient) doRequest(req *http.Request, response any) error {
 
 	resp, err := k.c.Do(req)
 	if err != nil {
-		return err
+		return xerrors.Errorf("Failed to do request: %w", err)
 	}
 	defer resp.Body.Close()
 
@@ -73,14 +84,14 @@ func (k *kairosRestClient) doRequest(req *http.Request, response any) error {
 func (k *kairosRestClient) GetInputs(ctx context.Context) ([]Input, error) {
 	// エンドポイントの設定
 	ep := fmt.Sprintf("http://%s/inputs", net.JoinHostPort(k.ip, k.port))
-	req, err := http.NewRequestWithContext(ctx, "GET", ep, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, ep, nil)
 	if err != nil {
-		return nil, err
+		return nil, xerrors.Errorf("Failed to create request: %w", err)
 	}
 
 	var payload []Input
 	if err := k.doRequest(req, &payload); err != nil {
-		return nil, err
+		return nil, xerrors.Errorf("Failed to do request: %w", err)
 	}
 
 	return payload, nil
@@ -93,14 +104,14 @@ type InputIdentifier interface {
 func getInput[T InputIdentifier](ctx context.Context, k *kairosRestClient, input T) (*Input, error) {
 	// エンドポイントの設定
 	ep := fmt.Sprintf("http://%s/inputs/%s", net.JoinHostPort(k.ip, k.port), input)
-	req, err := http.NewRequest("GET", ep, nil)
+	req, err := http.NewRequest(http.MethodGet, ep, nil)
 	if err != nil {
-		return nil, err
+		return nil, xerrors.Errorf("Failed to create request: %w", err)
 	}
 
 	var payload Input
 	if err := k.doRequest(req, &payload); err != nil {
-		return nil, err
+		return nil, xerrors.Errorf("Failed to do request: %w", err)
 	}
 
 	return &payload, nil
@@ -117,14 +128,14 @@ func (k *kairosRestClient) GetInputByNumber(ctx context.Context, number int) (*I
 func (k *kairosRestClient) GetMacros(ctx context.Context) ([]Macro, error) {
 	// エンドポイントの設定
 	ep := fmt.Sprintf("http://%s/macros", net.JoinHostPort(k.ip, k.port))
-	req, err := http.NewRequestWithContext(ctx, "GET", ep, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, ep, nil)
 	if err != nil {
-		return nil, err
+		return nil, xerrors.Errorf("Failed to create request: %w", err)
 	}
 
 	var response []Macro
 	if err := k.doRequest(req, &response); err != nil {
-		return nil, err
+		return nil, xerrors.Errorf("Failed to do request: %w", err)
 	}
 	return response, nil
 }
@@ -132,133 +143,130 @@ func (k *kairosRestClient) GetMacros(ctx context.Context) ([]Macro, error) {
 func (k *kairosRestClient) GetMacro(ctx context.Context, id string) (*Macro, error) {
 	// エンドポイントの設定
 	ep := fmt.Sprintf("http://%s/macros/%s", net.JoinHostPort(k.ip, k.port), id)
-	req, err := http.NewRequestWithContext(ctx, "GET", ep, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, ep, nil)
 	if err != nil {
-		return nil, err
+		return nil, xerrors.Errorf("Failed to create request: %w", err)
 	}
 
 	response := Macro{}
 	if err := k.doRequest(req, &response); err != nil {
-		return nil, err
+		return nil, xerrors.Errorf("Failed to do request: %w", err)
 	}
 	return &response, nil
 }
 
-func (k *kairosRestClient) GetAuxs(ctx context.Context) error {
+func (k *kairosRestClient) GetAuxs(ctx context.Context) (map[string]any, error) {
 	// エンドポイントの設定
 	ep := fmt.Sprintf("http://%s/aux", net.JoinHostPort(k.ip, k.port))
-	req, err := http.NewRequestWithContext(ctx, "GET", ep, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, ep, nil)
 	if err != nil {
-		return err
+		return nil, xerrors.Errorf("Failed to create request: %w", err)
 	}
 
 	// TODO: type
 	var payload map[string]any
 	if err := k.doRequest(req, &payload); err != nil {
-		return err
+		return nil, xerrors.Errorf("Failed to do request: %w", err)
 	}
 	fmt.Printf("Payload: %+v\n", payload)
 
-	return nil
+	return payload, nil
 }
 
 type AuxIdentifier interface {
 	~int | ~string
 }
 
-func getAux[T AuxIdentifier](ctx context.Context, k *kairosRestClient, aux T) error {
+func getAux[T AuxIdentifier](ctx context.Context, k *kairosRestClient, aux T) (map[string]any, error) {
 	// input=id or number
-	// TODO: context
 
 	// エンドポイントの設定
 	ep := fmt.Sprintf("http://%s/aux/%s", net.JoinHostPort(k.ip, k.port), aux)
-	req, err := http.NewRequestWithContext(ctx, "GET", ep, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, ep, nil)
 	if err != nil {
-		return err
+		return nil, xerrors.Errorf("Failed to create request: %w", err)
 	}
 
 	// TODO: type
 	var payload map[string]any
 	if err := k.doRequest(req, &payload); err != nil {
-		return err
+		return nil, xerrors.Errorf("Failed to do request: %w", err)
 	}
 	fmt.Printf("Payload: %+v\n", payload)
 
-	return nil
+	return payload, nil
 }
 
-func (k *kairosRestClient) GetAuxByID(ctx context.Context, id string) error {
+func (k *kairosRestClient) GetAuxByID(ctx context.Context, id string) (map[string]any, error) {
 	return getAux(ctx, k, id)
 }
 
-func (k *kairosRestClient) GetAuxByNumber(ctx context.Context, number int) error {
+func (k *kairosRestClient) GetAuxByNumber(ctx context.Context, number int) (map[string]any, error) {
 	return getAux(ctx, k, number)
 }
 
-func (k *kairosRestClient) GetMultiviewers(ctx context.Context) error {
+func (k *kairosRestClient) GetMultiviewers(ctx context.Context) (map[string]any, error) {
 	// エンドポイントの設定
 	ep := fmt.Sprintf("http://%s/multiviewers", net.JoinHostPort(k.ip, k.port))
-	req, err := http.NewRequestWithContext(ctx, "GET", ep, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, ep, nil)
 	if err != nil {
-		return err
+		return nil, xerrors.Errorf("Failed to create request: %w", err)
 	}
 
 	var payload map[string]any
 	if err := k.doRequest(req, &payload); err != nil {
-		return err
+		return nil, xerrors.Errorf("Failed to do request: %w", err)
 	}
 	fmt.Printf("Payload: %+v\n", payload)
 
-	return nil
+	return payload, nil
 }
 
-func (k *kairosRestClient) GetMultiviewer(ctx context.Context, mv string) error {
+func (k *kairosRestClient) GetMultiviewer(ctx context.Context, mv string) (map[string]any, error) {
 	// input=id or number?
 
 	// エンドポイントの設定
 	ep := fmt.Sprintf("http://%s/multiviewers/%s", net.JoinHostPort(k.ip, k.port), mv)
-	req, err := http.NewRequestWithContext(ctx, "GET", ep, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, ep, nil)
 	if err != nil {
-		return err
+		return nil, xerrors.Errorf("Failed to create request: %w", err)
 	}
 
 	var payload map[string]any
 	if err := k.doRequest(req, &payload); err != nil {
-		return err
+		return nil, xerrors.Errorf("Failed to do request: %w", err)
 	}
 	fmt.Printf("Payload: %+v\n", payload)
 
-	return nil
+	return payload, nil
 }
 
 func (k *kairosRestClient) GetScenes(ctx context.Context) ([]Scene, error) {
 	// エンドポイントの設定
 	ep := fmt.Sprintf("http://%s/scenes", net.JoinHostPort(k.ip, k.port))
-	req, err := http.NewRequestWithContext(ctx, "GET", ep, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, ep, nil)
 	if err != nil {
-		return nil, err
+		return nil, xerrors.Errorf("Failed to create request: %w", err)
 	}
 
 	var payload []Scene
 	if err := k.doRequest(req, &payload); err != nil {
-		return nil, err
+		return nil, xerrors.Errorf("Failed to do request: %w", err)
 	}
 	return payload, nil
 }
 
 func (k *kairosRestClient) GetScene(ctx context.Context, scene string) (*Scene, error) {
-	// TODO: context
-
 	// エンドポイントの設定
 	ep := fmt.Sprintf("http://%s/scenes", net.JoinHostPort(k.ip, k.port))
-	req, err := http.NewRequestWithContext(ctx, "GET", ep, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, ep, nil)
 	if err != nil {
-		return nil, err
+		return nil, xerrors.Errorf("Failed to create request: %w", err)
 	}
 
 	var payload Scene
 	if err := k.doRequest(req, &payload); err != nil {
-		return nil, err
+		return nil, xerrors.Errorf("Failed to do request: %w", err)
 	}
 	return &payload, nil
 }
@@ -276,7 +284,7 @@ type patchSceneResponsePayload struct {
 	Text string `json:"text"`
 }
 
-func (k *kairosRestClient) PatchScene(sceneUuid, layerUuid, a, b string, sources []string) error {
+func (k *kairosRestClient) PatchScene(ctx context.Context, sceneUuid, layerUuid, a, b string, sources []string) error {
 	payload := patchSceneRequestPayload{
 		Name:    "Background",
 		SourceA: a,
@@ -286,18 +294,18 @@ func (k *kairosRestClient) PatchScene(sceneUuid, layerUuid, a, b string, sources
 	}
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(payload); err != nil {
-		return err
+		return xerrors.Errorf("Failed to encode payload: %w", err)
 	}
 
 	ep := fmt.Sprintf("http://%s/scenes/%s/%s", net.JoinHostPort(k.ip, k.port), sceneUuid, layerUuid)
-	req, err := http.NewRequest("PATCH", ep, &buf)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPatch, ep, &buf)
 	if err != nil {
-		return err
+		return xerrors.Errorf("Failed to create request: %w", err)
 	}
 
 	var response patchSceneResponsePayload
 	if err := k.doRequest(req, &response); err != nil {
-		return err
+		return xerrors.Errorf("Failed to do request: %w", err)
 	}
 	if response.Code != 200 {
 		return xerrors.New(response.Text)
@@ -314,24 +322,24 @@ type patchMacroResponsePayload struct {
 	Text string `json:"text"`
 }
 
-func (k *kairosRestClient) PatchMacro(macroUuid, state string) error {
+func (k *kairosRestClient) PatchMacro(ctx context.Context, macroUuid, state string) error {
 	payload := patchMacroRequestPayload{
 		State: state,
 	}
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(payload); err != nil {
-		return err
+		return xerrors.Errorf("Failed to encode payload: %w", err)
 	}
 
 	ep := "http://" + k.ip + ":1234/macros/" + macroUuid
-	req, err := http.NewRequest("PATCH", ep, &buf)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPatch, ep, &buf)
 	if err != nil {
-		return err
+		return xerrors.Errorf("Failed to create request: %w", err)
 	}
 
 	var response patchMacroResponsePayload
 	if err := k.doRequest(req, &response); err != nil {
-		return err
+		return xerrors.Errorf("Failed to do request: %w", err)
 	}
 	if response.Code != 200 {
 		return xerrors.New(response.Text)
@@ -339,14 +347,14 @@ func (k *kairosRestClient) PatchMacro(macroUuid, state string) error {
 	return nil
 }
 
-func (k *kairosRestClient) PatchSnapshot() error {
+func (k *kairosRestClient) PatchSnapshot(ctx context.Context) error {
 	panic("TODO")
 }
 
-func (k *kairosRestClient) PatchAux() error {
+func (k *kairosRestClient) PatchAux(ctx context.Context) error {
 	panic("TODO")
 }
 
-func (k *kairosRestClient) PatchMultiviewer() error {
+func (k *kairosRestClient) PatchMultiviewer(ctx context.Context) error {
 	panic("TODO")
 }

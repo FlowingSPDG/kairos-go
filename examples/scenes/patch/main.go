@@ -48,7 +48,7 @@ func main() {
 		}
 
 		// patch scene
-		if err := kc.PatchScene(pgmScene.UUID, pgmLayer.UUID, prv, source, pgmSources); err != nil {
+		if err := kc.PatchScene(ctx, pgmScene.UUID, pgmLayer.UUID, prv, source, pgmSources); err != nil {
 			panic(err)
 		}
 
