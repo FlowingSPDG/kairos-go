@@ -13,7 +13,7 @@ jobs:
       matrix:
         go-version: [ "1.23" ]
         os: [ubuntu-latest, macos-latest, windows-latest]
-        arch: ['x86', 'x64']
+        arch: ['x32', 'x64']
 
     steps:
       # https://github.com/marketplace/actions/setup-go-environment
