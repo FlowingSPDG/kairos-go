@@ -103,7 +103,7 @@ type InputIdentifier interface {
 
 func getInput[T InputIdentifier](ctx context.Context, k *kairosRestClient, input T) (*Input, error) {
 	// エンドポイントの設定
-	ep := fmt.Sprintf("http://%s/inputs/%s", net.JoinHostPort(k.ip, k.port), input)
+	ep := fmt.Sprintf("http://%s/inputs/%v", net.JoinHostPort(k.ip, k.port), input)
 	req, err := http.NewRequest(http.MethodGet, ep, nil)
 	if err != nil {
 		return nil, xerrors.Errorf("Failed to create request: %w", err)
@@ -181,7 +181,7 @@ func getAux[T AuxIdentifier](ctx context.Context, k *kairosRestClient, aux T) (m
 	// input=id or number
 
 	// エンドポイントの設定
-	ep := fmt.Sprintf("http://%s/aux/%s", net.JoinHostPort(k.ip, k.port), aux)
+	ep := fmt.Sprintf("http://%s/aux/%v", net.JoinHostPort(k.ip, k.port), aux)
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, ep, nil)
 	if err != nil {
 		return nil, xerrors.Errorf("Failed to create request: %w", err)
