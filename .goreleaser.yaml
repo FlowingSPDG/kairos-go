@@ -22,6 +22,10 @@ builds:
       - linux
       - windows
       - darwin
+    
+    # Makefileにしたくね？
+    main: >-
+      {{.Env.GO_CMD_MAIN}}
 
 archives:
   - format: tar.gz

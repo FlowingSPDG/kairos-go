@@ -14,6 +14,13 @@ jobs:
         go-version: [ "1.23" ]
         os: [ubuntu-latest, macos-latest, windows-latest]
         arch: ['x64']
+        # Makefileにしたくね？
+        main: 
+          - examples/macros/get
+          - examples/macros/patch
+          - examples/scenes/get
+          - examples/scenes/patch
+          - examples/tester
 
     steps:
       # https://github.com/marketplace/actions/setup-go-environment
@@ -45,5 +52,13 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-${{ matrix.arch }}-${{ matrix.go-version }}-go-
 
+      - name: Lint
+        run: golangci-lint run
+
       - name: Test
         run: go test -v -cover ./...
+      
+      - name: Build
+        env:
+          GO_CMD_MAIN: ${{ matrix.main }}
+        run: goreleaser build --auto-snapshot --clean
