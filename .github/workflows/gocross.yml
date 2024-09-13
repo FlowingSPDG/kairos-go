@@ -53,12 +53,14 @@ jobs:
             ${{ runner.os }}-${{ matrix.arch }}-${{ matrix.go-version }}-go-
 
       - name: Lint
-        run: golangci-lint run
+        uses: golangci/golangci-lint-action@v6.1.0
 
       - name: Test
         run: go test -v -cover ./...
       
       - name: Build
+        uses: goreleaser/goreleaser-action@v6
         env:
           GO_CMD_MAIN: ${{ matrix.main }}
-        run: goreleaser build --auto-snapshot --clean
+        with:
+          args: --auto-snapshot --clean
