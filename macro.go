@@ -11,7 +11,7 @@ import (
 	"golang.org/x/xerrors"
 )
 
-func (k *kairosRestClient) GetMacros(ctx context.Context) ([]Macro, error) {
+func (k *kairosRestClient) GetMacros(ctx context.Context) ([]*Macro, error) {
 	// エンドポイントの設定
 	ep := fmt.Sprintf("http://%s/macros", net.JoinHostPort(k.ip, k.port))
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, ep, nil)
@@ -19,11 +19,13 @@ func (k *kairosRestClient) GetMacros(ctx context.Context) ([]Macro, error) {
 		return nil, xerrors.Errorf("Failed to create request: %w", err)
 	}
 
-	var response []Macro
-	if err := k.doRequest(req, &response); err != nil {
+	var payload []*Macro
+	if err := k.doRequest(req, &payload); err != nil {
 		return nil, xerrors.Errorf("Failed to do request: %w", err)
 	}
-	return response, nil
+	fmt.Printf("Payload: %+v\n", payload)
+
+	return payload, nil
 }
 
 func (k *kairosRestClient) GetMacro(ctx context.Context, id string) (*Macro, error) {
@@ -34,11 +36,13 @@ func (k *kairosRestClient) GetMacro(ctx context.Context, id string) (*Macro, err
 		return nil, xerrors.Errorf("Failed to create request: %w", err)
 	}
 
-	response := Macro{}
-	if err := k.doRequest(req, &response); err != nil {
+	payload := Macro{}
+	if err := k.doRequest(req, &payload); err != nil {
 		return nil, xerrors.Errorf("Failed to do request: %w", err)
 	}
-	return &response, nil
+	fmt.Printf("Payload: %+v\n", payload)
+
+	return &payload, nil
 }
 
 type patchMacroRequestPayload struct {
@@ -59,7 +63,7 @@ func (k *kairosRestClient) PatchMacro(ctx context.Context, macroUuid, state stri
 		return xerrors.Errorf("Failed to encode payload: %w", err)
 	}
 
-	ep := "http://" + k.ip + ":1234/macros/" + macroUuid
+	ep := fmt.Sprintf("http://%s/macros/%s", net.JoinHostPort(k.ip, k.port), macroUuid)
 	req, err := http.NewRequestWithContext(ctx, http.MethodPatch, ep, &buf)
 	if err != nil {
 		return xerrors.Errorf("Failed to create request: %w", err)
@@ -69,6 +73,8 @@ func (k *kairosRestClient) PatchMacro(ctx context.Context, macroUuid, state stri
 	if err := k.doRequest(req, &response); err != nil {
 		return xerrors.Errorf("Failed to do request: %w", err)
 	}
+	fmt.Printf("Payload: %+v\n", payload)
+
 	if response.Code != 200 {
 		return xerrors.New(response.Text)
 	}

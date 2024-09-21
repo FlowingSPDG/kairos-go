@@ -8,31 +8,34 @@ import (
 	"golang.org/x/xerrors"
 )
 
+// KairosRestClient is an interface to communicate with Panasonic Kairos.
+// Currently version 1.4.0 is supported.
 type KairosRestClient interface {
 	// AUX
-	GetAuxByID(ctx context.Context, id string) (map[string]any, error)
-	GetAuxByNumber(ctx context.Context, number int) (map[string]any, error)
-	GetAuxs(ctx context.Context) ([]any, error)
+	GetAuxByID(ctx context.Context, id string) (*Aux, error)
+	GetAuxByNumber(ctx context.Context, number int) (*Aux, error)
+	GetAuxs(ctx context.Context) ([]*Aux, error)
 	// PatchAux(ctx context.Context) error
 
 	// Inputs
 	GetInputByID(ctx context.Context, id string) (*Input, error)
 	GetInputByNumber(ctx context.Context, number int) (*Input, error)
-	GetInputs(ctx context.Context) ([]Input, error)
+	GetInputs(ctx context.Context) ([]*Input, error)
 
 	// Macros
 	GetMacro(ctx context.Context, id string) (*Macro, error)
-	GetMacros(ctx context.Context) ([]Macro, error)
+	GetMacros(ctx context.Context) ([]*Macro, error)
 	PatchMacro(ctx context.Context, macroUuid string, state string) error
 
 	// Multiviewers
-	GetMultiviewer(ctx context.Context, mv string) (map[string]any, error)
-	GetMultiviewers(ctx context.Context) ([]any, error)
+	GetMultiviewerByID(ctx context.Context, mv string) (*Multiviewer, error)
+	GetMultiviewerByNumber(ctx context.Context, mv int) (*Multiviewer, error)
+	GetMultiviewers(ctx context.Context) ([]*Multiviewer, error)
 	// PatchMultiviewer(ctx context.Context) error
 
 	// Scenes
-	GetScene(ctx context.Context, scene string) ([]any, error)
-	GetScenes(ctx context.Context) ([]Scene, error)
+	GetScene(ctx context.Context, scene string) (*Scene, error)
+	GetScenes(ctx context.Context) ([]*Scene, error)
 	PatchScene(ctx context.Context, sceneUuid string, layerUuid string, a string, b string, sources []string) error
 
 	// Snapshot

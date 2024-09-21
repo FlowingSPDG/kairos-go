@@ -9,7 +9,7 @@ import (
 	"golang.org/x/xerrors"
 )
 
-func (k *kairosRestClient) GetInputs(ctx context.Context) ([]Input, error) {
+func (k *kairosRestClient) GetInputs(ctx context.Context) ([]*Input, error) {
 	// エンドポイントの設定
 	ep := fmt.Sprintf("http://%s/inputs", net.JoinHostPort(k.ip, k.port))
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, ep, nil)
@@ -17,10 +17,11 @@ func (k *kairosRestClient) GetInputs(ctx context.Context) ([]Input, error) {
 		return nil, xerrors.Errorf("Failed to create request: %w", err)
 	}
 
-	var payload []Input
+	var payload []*Input
 	if err := k.doRequest(req, &payload); err != nil {
 		return nil, xerrors.Errorf("Failed to do request: %w", err)
 	}
+	fmt.Printf("Payload: %+v\n", payload)
 
 	return payload, nil
 }
@@ -41,6 +42,7 @@ func getInput[T InputIdentifier](ctx context.Context, k *kairosRestClient, input
 	if err := k.doRequest(req, &payload); err != nil {
 		return nil, xerrors.Errorf("Failed to do request: %w", err)
 	}
+	fmt.Printf("Payload: %+v\n", payload)
 
 	return &payload, nil
 }

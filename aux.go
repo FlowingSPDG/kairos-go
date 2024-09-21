@@ -9,7 +9,7 @@ import (
 	"golang.org/x/xerrors"
 )
 
-func (k *kairosRestClient) GetAuxs(ctx context.Context) ([]any, error) {
+func (k *kairosRestClient) GetAuxs(ctx context.Context) ([]*Aux, error) {
 	// エンドポイントの設定
 	ep := fmt.Sprintf("http://%s/aux", net.JoinHostPort(k.ip, k.port))
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, ep, nil)
@@ -17,8 +17,7 @@ func (k *kairosRestClient) GetAuxs(ctx context.Context) ([]any, error) {
 		return nil, xerrors.Errorf("Failed to create request: %w", err)
 	}
 
-	// TODO: type
-	var payload []any
+	var payload []*Aux
 	if err := k.doRequest(req, &payload); err != nil {
 		return nil, xerrors.Errorf("Failed to do request: %w", err)
 	}
@@ -31,7 +30,7 @@ type AuxIdentifier interface {
 	~int | ~string
 }
 
-func getAux[T AuxIdentifier](ctx context.Context, k *kairosRestClient, aux T) (map[string]any, error) {
+func getAux[T AuxIdentifier](ctx context.Context, k *kairosRestClient, aux T) (*Aux, error) {
 	// input=id or number
 
 	// エンドポイントの設定
@@ -41,8 +40,7 @@ func getAux[T AuxIdentifier](ctx context.Context, k *kairosRestClient, aux T) (m
 		return nil, xerrors.Errorf("Failed to create request: %w", err)
 	}
 
-	// TODO: type
-	var payload map[string]any
+	var payload *Aux
 	if err := k.doRequest(req, &payload); err != nil {
 		return nil, xerrors.Errorf("Failed to do request: %w", err)
 	}
@@ -51,11 +49,11 @@ func getAux[T AuxIdentifier](ctx context.Context, k *kairosRestClient, aux T) (m
 	return payload, nil
 }
 
-func (k *kairosRestClient) GetAuxByID(ctx context.Context, id string) (map[string]any, error) {
+func (k *kairosRestClient) GetAuxByID(ctx context.Context, id string) (*Aux, error) {
 	return getAux(ctx, k, id)
 }
 
-func (k *kairosRestClient) GetAuxByNumber(ctx context.Context, number int) (map[string]any, error) {
+func (k *kairosRestClient) GetAuxByNumber(ctx context.Context, number int) (*Aux, error) {
 	return getAux(ctx, k, number)
 }
 

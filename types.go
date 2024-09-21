@@ -3,59 +3,62 @@ package kairos
 // HOLY FUDGE WHAT THE HELL IS WRONG WITH KAIROS "OFFICIAL" API DOCUMENTS
 
 type Aux struct {
-	UUID    string   `json:"uuid"`
-	Index   int      `json:"index"`
-	Name    string   `json:"name"`
-	Source  string   `json:"source"`
-	Sources []string `json:"sources"`
+	UUID    string   `json:"uuid"`    // R // can be replaced with google.uuid?
+	Index   int      `json:"index"`   // R
+	Name    string   `json:"name"`    // R
+	Source  string   `json:"source"`  // R/W
+	Sources []string `json:"sources"` // W
 }
 
 type Macro struct {
-	UUID  string `json:"uuid"`
-	Color string `json:"color"`
-	Name  string `json:"name"`
-	State any    `json:"state"`
+	UUID  string `json:"uuid"`  // R
+	Color string `json:"color"` // R
+	Name  string `json:"name"`  // R
+	State any    `json:"state"` // W // null if read // "play" or "recall"?
 }
 
 type Snapshot struct {
-	UUID  string `json:"uuid"`
-	State any
+	UUID  string `json:"uuid"` // R
+	Name  string `json:"name"` // R
+	State any    // W // null if read
 }
 
 type Input struct {
-	UUID  string `json:"uuid"`
-	Index int    `json:"index"`
-	Name  string `json:"name"`
-	Tally int    `json:"tally"`
+	UUID  string `json:"uuid"`  // R
+	Index int    `json:"index"` // R
+	Name  string `json:"name"`  // R
+	Tally int    `json:"tally"` // R
 }
 
 type Scene struct {
-	UUID   string  `json:"uuid"`
-	Layers []Layer `json:"layers"`
-	Name   string  `json:"name"`
-	Tally  int     `json:"tally"`
+	UUID  string `json:"uuid"`  // R
+	Name  string `json:"name"`  // R
+	Tally int    `json:"tally"` // R
+	// Macros?
+	// Snapshots?
+	Layers []Layer `json:"layers"` // R
 }
 
 type Layer struct {
-	UUID    string   `json:"uuid"`
-	Name    string   `json:"name"`
-	SourceA string   `json:"sourceA"`
-	SourceB string   `json:"sourceB"`
-	Sources []string `json:"sources"`
+	UUID    string   `json:"uuid"`              // R
+	Name    string   `json:"name"`              // R
+	SourceA *string  `json:"sourceA,omitempty"` // R/W // optional
+	SourceB *string  `json:"sourceB,omitempty"` // R/W // optional
+	Sources []string `json:"sources"`           // R
 }
 
 type Multiviewer struct {
-	Index   int
-	Name    string
-	Preset  any
-	Presets []MultiviewerPreset
-	SDP     string
+	Index   int                 // R
+	Name    string              // R
+	Preset  any                 // W // null if read
+	Presets []MultiviewerPreset // R
+	SDP     string              // R
 }
 
 type MultiviewerPreset struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
-	Usr  bool   `json:"usr"`
+	ID   string `json:"id"`   // R
+	Name string `json:"name"` // R
+	Usr  bool   `json:"usr"`  // R
 }
 
 // TODO: SDP. Content-Type: "application/sdp"

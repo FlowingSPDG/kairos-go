@@ -11,7 +11,7 @@ import (
 	"golang.org/x/xerrors"
 )
 
-func (k *kairosRestClient) GetScenes(ctx context.Context) ([]Scene, error) {
+func (k *kairosRestClient) GetScenes(ctx context.Context) ([]*Scene, error) {
 	// エンドポイントの設定
 	ep := fmt.Sprintf("http://%s/scenes", net.JoinHostPort(k.ip, k.port))
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, ep, nil)
@@ -19,14 +19,16 @@ func (k *kairosRestClient) GetScenes(ctx context.Context) ([]Scene, error) {
 		return nil, xerrors.Errorf("Failed to create request: %w", err)
 	}
 
-	var payload []Scene
+	var payload []*Scene
 	if err := k.doRequest(req, &payload); err != nil {
 		return nil, xerrors.Errorf("Failed to do request: %w", err)
 	}
+	fmt.Printf("Payload: %+v\n", payload)
+
 	return payload, nil
 }
 
-func (k *kairosRestClient) GetScene(ctx context.Context, scene string) ([]any, error) {
+func (k *kairosRestClient) GetScene(ctx context.Context, scene string) (*Scene, error) {
 	// エンドポイントの設定
 	ep := fmt.Sprintf("http://%s/scenes", net.JoinHostPort(k.ip, k.port))
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, ep, nil)
@@ -34,10 +36,12 @@ func (k *kairosRestClient) GetScene(ctx context.Context, scene string) ([]any, e
 		return nil, xerrors.Errorf("Failed to create request: %w", err)
 	}
 
-	var payload []any
+	var payload *Scene
 	if err := k.doRequest(req, &payload); err != nil {
 		return nil, xerrors.Errorf("Failed to do request: %w", err)
 	}
+	fmt.Printf("Payload: %+v\n", payload)
+
 	return payload, nil
 }
 
@@ -77,6 +81,8 @@ func (k *kairosRestClient) PatchScene(ctx context.Context, sceneUuid, layerUuid,
 	if err := k.doRequest(req, &response); err != nil {
 		return xerrors.Errorf("Failed to do request: %w", err)
 	}
+	fmt.Printf("Payload: %+v\n", payload)
+
 	if response.Code != 200 {
 		return xerrors.New(response.Text)
 	}
