@@ -5,15 +5,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"net"
 	"net/http"
 
 	"golang.org/x/xerrors"
 )
 
 func (k *kairosRestClient) GetMacros(ctx context.Context) ([]*Macro, error) {
-	// エンドポイントの設定
-	ep := fmt.Sprintf("http://%s/macros", net.JoinHostPort(k.ip, k.port))
+	ep := k.ep.Macros()
 	var payload []*Macro
 	if err := doGET(ctx, k, ep, &payload); err != nil {
 		return nil, xerrors.Errorf("Failed to get inputs: %w", err)
@@ -23,8 +21,7 @@ func (k *kairosRestClient) GetMacros(ctx context.Context) ([]*Macro, error) {
 }
 
 func (k *kairosRestClient) GetMacro(ctx context.Context, id string) (*Macro, error) {
-	// エンドポイントの設定
-	ep := fmt.Sprintf("http://%s/macros/%s", net.JoinHostPort(k.ip, k.port), id)
+	ep := k.ep.Macro(id)
 	var payload Macro
 	if err := doGET(ctx, k, ep, &payload); err != nil {
 		return nil, xerrors.Errorf("Failed to get inputs: %w", err)
@@ -51,7 +48,7 @@ func (k *kairosRestClient) PatchMacro(ctx context.Context, macroUuid, state stri
 		return xerrors.Errorf("Failed to encode payload: %w", err)
 	}
 
-	ep := fmt.Sprintf("http://%s/macros/%s", net.JoinHostPort(k.ip, k.port), macroUuid)
+	ep := k.ep.Macro(macroUuid)
 	req, err := http.NewRequestWithContext(ctx, http.MethodPatch, ep, &buf)
 	if err != nil {
 		return xerrors.Errorf("Failed to create request: %w", err)

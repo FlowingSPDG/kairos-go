@@ -2,15 +2,13 @@ package kairos
 
 import (
 	"context"
-	"fmt"
-	"net"
 
 	"golang.org/x/xerrors"
 )
 
 func (k *kairosRestClient) GetMultiviewers(ctx context.Context) ([]*Multiviewer, error) {
 	// エンドポイントの設定
-	ep := fmt.Sprintf("http://%s/multiviewers", net.JoinHostPort(k.ip, k.port))
+	ep := k.ep.Multiviewers()
 	var payload []*Multiviewer
 	if err := doGET(ctx, k, ep, &payload); err != nil {
 		return nil, xerrors.Errorf("Failed to get inputs: %w", err)
@@ -25,7 +23,7 @@ type MultiviewerIdentifier interface {
 
 func getMultiviewer[T MultiviewerIdentifier](ctx context.Context, k *kairosRestClient, mv T) (*Multiviewer, error) {
 	// エンドポイントの設定
-	ep := fmt.Sprintf("http://%s/multiviewers/%v", net.JoinHostPort(k.ip, k.port), mv)
+	ep := endPointMultiviewers(k.ep, mv)
 	var payload Multiviewer
 	if err := doGET(ctx, k, ep, &payload); err != nil {
 		return nil, xerrors.Errorf("Failed to get inputs: %w", err)

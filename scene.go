@@ -12,8 +12,7 @@ import (
 )
 
 func (k *kairosRestClient) GetScenes(ctx context.Context) ([]*Scene, error) {
-	// エンドポイントの設定
-	ep := fmt.Sprintf("http://%s/scenes", net.JoinHostPort(k.ip, k.port))
+	ep := k.ep.Scenes()
 	var payload []*Scene
 	if err := doGET(ctx, k, ep, &payload); err != nil {
 		return nil, xerrors.Errorf("Failed to get inputs: %w", err)
@@ -23,8 +22,7 @@ func (k *kairosRestClient) GetScenes(ctx context.Context) ([]*Scene, error) {
 }
 
 func (k *kairosRestClient) GetScene(ctx context.Context, scene string) (*Scene, error) {
-	// エンドポイントの設定
-	ep := fmt.Sprintf("http://%s/scenes", net.JoinHostPort(k.ip, k.port))
+	ep := k.ep.Scene(scene)
 	var payload Scene
 	if err := doGET(ctx, k, ep, &payload); err != nil {
 		return nil, xerrors.Errorf("Failed to get inputs: %w", err)
@@ -59,6 +57,7 @@ func (k *kairosRestClient) PatchScene(ctx context.Context, sceneUuid, layerUuid,
 		return xerrors.Errorf("Failed to encode payload: %w", err)
 	}
 
+	// TODO: ep
 	ep := fmt.Sprintf("http://%s/scenes/%s/%s", net.JoinHostPort(k.ip, k.port), sceneUuid, layerUuid)
 	req, err := http.NewRequestWithContext(ctx, http.MethodPatch, ep, &buf)
 	if err != nil {

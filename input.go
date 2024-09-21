@@ -2,15 +2,12 @@ package kairos
 
 import (
 	"context"
-	"fmt"
-	"net"
 
 	"golang.org/x/xerrors"
 )
 
 func (k *kairosRestClient) GetInputs(ctx context.Context) ([]*Input, error) {
-	// エンドポイントの設定
-	ep := fmt.Sprintf("http://%s/inputs", net.JoinHostPort(k.ip, k.port))
+	ep := k.ep.Inputs()
 	var payload []*Input
 	if err := doGET(ctx, k, ep, &payload); err != nil {
 		return nil, xerrors.Errorf("Failed to get inputs: %w", err)
@@ -24,8 +21,7 @@ type InputIdentifier interface {
 }
 
 func getInput[T InputIdentifier](ctx context.Context, k *kairosRestClient, input T) (*Input, error) {
-	// エンドポイントの設定
-	ep := fmt.Sprintf("http://%s/inputs/%v", net.JoinHostPort(k.ip, k.port), input)
+	ep := endPointInput(k.ep, input)
 	var payload Input
 	if err := doGET(ctx, k, ep, &payload); err != nil {
 		return nil, xerrors.Errorf("Failed to get inputs: %w", err)

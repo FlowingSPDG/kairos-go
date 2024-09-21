@@ -49,6 +49,8 @@ type kairosRestClient struct {
 	c        *http.Client
 	user     string
 	password string
+
+	ep *Endpoints
 }
 
 func NewKairosRestClient(ip string, port string, user, password string) KairosRestClient {
@@ -58,6 +60,8 @@ func NewKairosRestClient(ip string, port string, user, password string) KairosRe
 		c:        &http.Client{},
 		user:     user,
 		password: password,
+
+		ep: NewEndpoints(ip, port),
 	}
 }
 
