@@ -1,5 +1,12 @@
 package kairos
 
+import (
+	"encoding/json"
+
+	"github.com/pixelbender/go-sdp/sdp"
+	"golang.org/x/xerrors"
+)
+
 // HOLY FUDGE WHAT THE HELL IS WRONG WITH KAIROS "OFFICIAL" API DOCUMENTS
 
 type Aux struct {
@@ -63,4 +70,16 @@ type MultiviewerPreset struct {
 	Usr  bool   `json:"usr"`  // R
 }
 
-// TODO: SDP. Content-Type: "application/sdp"
+var _ json.Unmarshaler = (*SDP)(nil)
+
+type SDP struct {
+	raw *sdp.Session
+}
+
+func (s *SDP) UnmarshalJSON(b []byte) (err error) {
+	s, err = parseSDP(b)
+	if err != nil {
+		return xerrors.Errorf("Failed to Unmarshal sdp field: %w", err)
+	}
+	return nil
+}
