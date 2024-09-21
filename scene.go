@@ -14,16 +14,10 @@ import (
 func (k *kairosRestClient) GetScenes(ctx context.Context) ([]*Scene, error) {
 	// エンドポイントの設定
 	ep := fmt.Sprintf("http://%s/scenes", net.JoinHostPort(k.ip, k.port))
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, ep, nil)
-	if err != nil {
-		return nil, xerrors.Errorf("Failed to create request: %w", err)
-	}
-
 	var payload []*Scene
-	if err := k.doRequest(req, &payload); err != nil {
-		return nil, xerrors.Errorf("Failed to do request: %w", err)
+	if err := doGET(ctx, k, ep, &payload); err != nil {
+		return nil, xerrors.Errorf("Failed to get inputs: %w", err)
 	}
-	fmt.Printf("Payload: %+v\n", payload)
 
 	return payload, nil
 }
@@ -31,18 +25,12 @@ func (k *kairosRestClient) GetScenes(ctx context.Context) ([]*Scene, error) {
 func (k *kairosRestClient) GetScene(ctx context.Context, scene string) (*Scene, error) {
 	// エンドポイントの設定
 	ep := fmt.Sprintf("http://%s/scenes", net.JoinHostPort(k.ip, k.port))
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, ep, nil)
-	if err != nil {
-		return nil, xerrors.Errorf("Failed to create request: %w", err)
+	var payload Scene
+	if err := doGET(ctx, k, ep, &payload); err != nil {
+		return nil, xerrors.Errorf("Failed to get inputs: %w", err)
 	}
 
-	var payload *Scene
-	if err := k.doRequest(req, &payload); err != nil {
-		return nil, xerrors.Errorf("Failed to do request: %w", err)
-	}
-	fmt.Printf("Payload: %+v\n", payload)
-
-	return payload, nil
+	return &payload, nil
 }
 
 type patchSceneRequestPayload struct {

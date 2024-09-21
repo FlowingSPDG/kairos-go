@@ -3,6 +3,7 @@ package kairos
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"golang.org/x/xerrors"
@@ -81,3 +82,21 @@ func (k *kairosRestClient) doRequest(req *http.Request, response any) error {
 
 	return nil
 }
+
+// TODO: エンドポイントを解決する関数を作成する
+
+func doGET[T any](ctx context.Context, k *kairosRestClient, endpoint string, v *T) error {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
+	if err != nil {
+		return xerrors.Errorf("Failed to create request: %w", err)
+	}
+
+	if err := k.doRequest(req, &v); err != nil {
+		return xerrors.Errorf("Failed to do request: %w", err)
+	}
+	fmt.Printf("Payload: %+v\n", v)
+
+	return nil
+}
+
+// TODO: doPatch

@@ -14,16 +14,10 @@ import (
 func (k *kairosRestClient) GetMacros(ctx context.Context) ([]*Macro, error) {
 	// エンドポイントの設定
 	ep := fmt.Sprintf("http://%s/macros", net.JoinHostPort(k.ip, k.port))
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, ep, nil)
-	if err != nil {
-		return nil, xerrors.Errorf("Failed to create request: %w", err)
-	}
-
 	var payload []*Macro
-	if err := k.doRequest(req, &payload); err != nil {
-		return nil, xerrors.Errorf("Failed to do request: %w", err)
+	if err := doGET(ctx, k, ep, &payload); err != nil {
+		return nil, xerrors.Errorf("Failed to get inputs: %w", err)
 	}
-	fmt.Printf("Payload: %+v\n", payload)
 
 	return payload, nil
 }
@@ -31,16 +25,10 @@ func (k *kairosRestClient) GetMacros(ctx context.Context) ([]*Macro, error) {
 func (k *kairosRestClient) GetMacro(ctx context.Context, id string) (*Macro, error) {
 	// エンドポイントの設定
 	ep := fmt.Sprintf("http://%s/macros/%s", net.JoinHostPort(k.ip, k.port), id)
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, ep, nil)
-	if err != nil {
-		return nil, xerrors.Errorf("Failed to create request: %w", err)
+	var payload Macro
+	if err := doGET(ctx, k, ep, &payload); err != nil {
+		return nil, xerrors.Errorf("Failed to get inputs: %w", err)
 	}
-
-	payload := Macro{}
-	if err := k.doRequest(req, &payload); err != nil {
-		return nil, xerrors.Errorf("Failed to do request: %w", err)
-	}
-	fmt.Printf("Payload: %+v\n", payload)
 
 	return &payload, nil
 }
