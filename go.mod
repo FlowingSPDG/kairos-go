@@ -8,4 +8,4 @@ require (
 	golang.org/x/xerrors v0.0.0-20240903120638-7835f813f4da
 )
 
-require github.com/hashicorp/errwrap v1.0.0 // indirect
+require github.com/hashicorp/errwrap v1.1.0 // indirect
