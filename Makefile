@@ -7,3 +7,4 @@ lint:
 
 test:
 	go test -v -cover ./...
+
