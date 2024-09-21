@@ -12,7 +12,7 @@ type Aux struct {
 
 type Macro struct {
 	UUID  string `json:"uuid"`  // R
-	Color string `json:"color"` // R
+	Color string `json:"color"` // R // TODO: parse color tp struct...
 	Name  string `json:"name"`  // R
 	State any    `json:"state"` // W // null if read // "play" or "recall"?
 }
@@ -31,12 +31,14 @@ type Input struct {
 }
 
 type Scene struct {
-	UUID  string `json:"uuid"`  // R
-	Name  string `json:"name"`  // R
-	Tally int    `json:"tally"` // R
-	// Macros?
-	// Snapshots?
+	UUID   string  `json:"uuid"`   // R
+	Name   string  `json:"name"`   // R
+	Tally  int     `json:"tally"`  // R
 	Layers []Layer `json:"layers"` // R
+
+	// following fields are not documented
+	Macros    []Macro    `json:"macros"`    // R?
+	Snapshots []Snapshot `json:"snapshots"` // R?
 }
 
 type Layer struct {
@@ -56,7 +58,7 @@ type Multiviewer struct {
 }
 
 type MultiviewerPreset struct {
-	ID   string `json:"id"`   // R
+	ID   int    `json:"id"`   // R
 	Name string `json:"name"` // R
 	Usr  bool   `json:"usr"`  // R
 }
