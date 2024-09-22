@@ -44,13 +44,3 @@ func parseSDP(b []byte) (*SDP, error) {
 		raw: s,
 	}, nil
 }
-
-func parseSDPStr(str string) (*SDP, error) {
-	s, err := sdp.ParseString(str)
-	if err != nil {
-		return nil, xerrors.Errorf("failed to parse SDP: %w", err)
-	}
-	return &SDP{
-		raw: s,
-	}, nil
-}
