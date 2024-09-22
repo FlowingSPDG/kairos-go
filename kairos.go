@@ -46,20 +46,18 @@ type KairosRestClient interface {
 }
 
 type kairosRestClient struct {
-	ip       string
-	port     string
-	c        *http.Client
+	c *http.Client
+
 	user     string
 	password string
 
 	ep *Endpoints
 }
 
-func NewKairosRestClient(ip string, port string, user, password string) KairosRestClient {
+func NewKairosRestClient(ip, port, user, password string) KairosRestClient {
 	return &kairosRestClient{
-		ip:       ip,
-		port:     port,
-		c:        &http.Client{},
+		c: http.DefaultClient,
+
 		user:     user,
 		password: password,
 
@@ -89,7 +87,7 @@ func (k *kairosRestClient) doGetRequest(req *http.Request, response any) error {
 	defer resp.Body.Close()
 
 	if err := json.NewDecoder(resp.Body).Decode(response); err != nil {
-		return err
+		return xerrors.Errorf("Failed to decode response: %w", err)
 	}
 
 	return nil
@@ -105,7 +103,7 @@ func (k *kairosRestClient) doPatchRequest(req *http.Request, response any) error
 	defer resp.Body.Close()
 
 	if err := json.NewDecoder(resp.Body).Decode(response); err != nil {
-		return err
+		return xerrors.Errorf("Failed to decode response: %w", err)
 	}
 
 	return nil

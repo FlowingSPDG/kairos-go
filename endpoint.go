@@ -8,14 +8,16 @@ import (
 // TODO: Support https
 
 type Endpoints struct {
-	ip   string
-	port string
+	protocol string
+	ip       string
+	port     string
 }
 
 func NewEndpoints(ip, port string) *Endpoints {
 	return &Endpoints{
-		ip:   ip,
-		port: port,
+		protocol: "http",
+		ip:       ip,
+		port:     port,
 	}
 }
 
@@ -24,11 +26,11 @@ type AuxIdentifier interface {
 }
 
 func (e *Endpoints) Auxs() string {
-	return fmt.Sprintf("http://%s/aux", net.JoinHostPort(e.ip, e.port))
+	return fmt.Sprintf("%s://%s/aux", e.protocol, net.JoinHostPort(e.ip, e.port))
 }
 
 func endPointAux[T AuxIdentifier](e *Endpoints, id T) string {
-	return fmt.Sprintf("http://%s/aux/%v", net.JoinHostPort(e.ip, e.port), id)
+	return fmt.Sprintf("%s://%s/aux/%v", e.protocol, net.JoinHostPort(e.ip, e.port), id)
 }
 
 func (e *Endpoints) AuxByID(id string) string {
@@ -39,11 +41,11 @@ func (e *Endpoints) AuxByNumber(number int) string {
 }
 
 func (e *Endpoints) Inputs() string {
-	return fmt.Sprintf("http://%s/inputs", net.JoinHostPort(e.ip, e.port))
+	return fmt.Sprintf("%s://%s/inputs", e.protocol, net.JoinHostPort(e.ip, e.port))
 }
 
 func endPointInput[T InputIdentifier](e *Endpoints, id T) string {
-	return fmt.Sprintf("http://%s/inputs/%v", net.JoinHostPort(e.ip, e.port), id)
+	return fmt.Sprintf("%s://%s/inputs/%v", e.protocol, net.JoinHostPort(e.ip, e.port), id)
 }
 
 func (e *Endpoints) InputByID(id string) string {
@@ -54,19 +56,19 @@ func (e *Endpoints) InputByNumber(number int) string {
 }
 
 func (e *Endpoints) Macros() string {
-	return fmt.Sprintf("http://%s/macros", net.JoinHostPort(e.ip, e.port))
+	return fmt.Sprintf("%s://%s/macros", e.protocol, net.JoinHostPort(e.ip, e.port))
 }
 
 func (e *Endpoints) Macro(id string) string {
-	return fmt.Sprintf("http://%s/macros/%s", net.JoinHostPort(e.ip, e.port), id)
+	return fmt.Sprintf("%s://%s/macros/%s", e.protocol, net.JoinHostPort(e.ip, e.port), id)
 }
 
 func (e *Endpoints) Multiviewers() string {
-	return fmt.Sprintf("http://%s/multiviewers", net.JoinHostPort(e.ip, e.port))
+	return fmt.Sprintf("%s://%s/multiviewers", e.protocol, net.JoinHostPort(e.ip, e.port))
 }
 
 func endPointMultiviewers[T MultiviewerIdentifier](e *Endpoints, id T) string {
-	return fmt.Sprintf("http://%s/multiviewers/%v", net.JoinHostPort(e.ip, e.port), id)
+	return fmt.Sprintf("%s://%s/multiviewers/%v", e.protocol, net.JoinHostPort(e.ip, e.port), id)
 }
 
 func (e *Endpoints) MultiviewerByID(id string) string {
@@ -77,9 +79,9 @@ func (e *Endpoints) MultiviewerInputByNumber(number int) string {
 }
 
 func (e *Endpoints) Scenes() string {
-	return fmt.Sprintf("http://%s/scenes", net.JoinHostPort(e.ip, e.port))
+	return fmt.Sprintf("%s://%s/scenes", e.protocol, net.JoinHostPort(e.ip, e.port))
 }
 
 func (e *Endpoints) Scene(id string) string {
-	return fmt.Sprintf("http://%s/scenes/%s", net.JoinHostPort(e.ip, e.port), id)
+	return fmt.Sprintf("%s://%s/scenes/%s", e.protocol, net.JoinHostPort(e.ip, e.port), id)
 }
