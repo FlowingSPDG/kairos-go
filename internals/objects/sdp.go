@@ -2,6 +2,7 @@ package objects
 
 import (
 	"encoding/json"
+	"strings"
 
 	"github.com/pixelbender/go-sdp/sdp"
 	"golang.org/x/xerrors"
@@ -14,11 +15,12 @@ type SDP struct {
 }
 
 //nolint:ineffassign,staticcheck
-func (s *SDP) UnmarshalJSON(b []byte) (err error) {
-	s, err = parseSDP(b)
+func (s *SDP) UnmarshalJSON(b []byte) error {
+	session, err := parseSDP(b)
 	if err != nil {
 		return xerrors.Errorf("Failed to Unmarshal sdp field: %w", err)
 	}
+	s.raw = session.raw
 	return nil
 }
 
@@ -27,7 +29,24 @@ func (s *SDP) Raw() *sdp.Session {
 }
 
 func parseSDP(b []byte) (*SDP, error) {
-	s, err := sdp.Parse(b)
+	// Replace new line
+	bs := strings.ReplaceAll(string(b), "\\n", "\n")
+	// remove last line
+	bs = strings.TrimSuffix(bs, "\n")
+	// remove double quotes
+	bs = strings.TrimLeft(bs, `"`)
+	bs = strings.TrimRight(bs, `"`)
+	s, err := sdp.ParseString(bs)
+	if err != nil {
+		return nil, xerrors.Errorf("failed to parse SDP: %w", err)
+	}
+	return &SDP{
+		raw: s,
+	}, nil
+}
+
+func parseSDPStr(str string) (*SDP, error) {
+	s, err := sdp.ParseString(str)
 	if err != nil {
 		return nil, xerrors.Errorf("failed to parse SDP: %w", err)
 	}

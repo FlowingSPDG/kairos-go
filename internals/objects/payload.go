@@ -105,7 +105,6 @@ type MultiviewerW struct {
 }
 
 type MultiviewerPresetR struct {
-	base
 	ID   int    `json:"id"`
 	Name string `json:"name"`
 	Usr  bool   `json:"usr"`
