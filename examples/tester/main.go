@@ -22,7 +22,7 @@ func main() {
 	defer stop()
 
 	log.Println("KAIROSのAPIテストを開始します")
-	log.Printf("テスト対象のKAIROS IP:%s PORT:%s USER:%s PASSWORD:%s\n", ip, port, user, password)
+	log.Printf("テスト設定\n KAIROS_IP:%s KAIROS_PORT:%s KAIROS_USER:%s KAIROS_PASSWORD:%s\n", ip, port, user, password)
 
 	kc := kairos.NewKairosRestClient(ip, port, user, password)
 	// testing interface...
