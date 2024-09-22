@@ -11,10 +11,10 @@ import (
 )
 
 var (
-	user     = os.Getenv("KAIROS_USER")
-	password = os.Getenv("KAIROS_PASSWORD")
 	ip       = os.Getenv("KAIROS_IP")
 	port     = os.Getenv("KAIROS_PORT")
+	user     = os.Getenv("KAIROS_USER")
+	password = os.Getenv("KAIROS_PASSWORD")
 )
 
 func main() {
@@ -22,8 +22,9 @@ func main() {
 	defer stop()
 
 	log.Println("KAIROSのAPIテストを開始します")
+	log.Printf("テスト対象のKAIROS IP:%s PORT:%s USER:%s PASSWORD:%s\n", ip, port, user, password)
 
-	kc := kairos.NewKairosRestClient(ip, user, port, password)
+	kc := kairos.NewKairosRestClient(ip, port, user, password)
 	// testing interface...
 
 	var errs *multierror.Error

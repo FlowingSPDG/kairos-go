@@ -10,10 +10,10 @@ import (
 )
 
 var (
-	user     = os.Getenv("KAIROS_USER")
-	password = os.Getenv("KAIROS_PASSWORD")
 	ip       = os.Getenv("KAIROS_IP")
 	port     = os.Getenv("KAIROS_PORT")
+	user     = os.Getenv("KAIROS_USER")
+	password = os.Getenv("KAIROS_PASSWORD")
 )
 
 func main() {
