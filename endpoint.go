@@ -19,6 +19,25 @@ func NewEndpoints(ip, port string) *Endpoints {
 	}
 }
 
+type AuxIdentifier interface {
+	~int | ~string
+}
+
+func (e *Endpoints) Auxs() string {
+	return fmt.Sprintf("http://%s/aux", net.JoinHostPort(e.ip, e.port))
+}
+
+func endPointAux[T AuxIdentifier](e *Endpoints, id T) string {
+	return fmt.Sprintf("http://%s/aux/%v", net.JoinHostPort(e.ip, e.port), id)
+}
+
+func (e *Endpoints) AuxByID(id string) string {
+	return endPointAux(e, id)
+}
+func (e *Endpoints) AuxByNumber(number int) string {
+	return endPointAux(e, number)
+}
+
 func (e *Endpoints) Inputs() string {
 	return fmt.Sprintf("http://%s/inputs", net.JoinHostPort(e.ip, e.port))
 }

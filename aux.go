@@ -2,16 +2,15 @@ package kairos
 
 import (
 	"context"
-	"fmt"
-	"net"
 
+	"github.com/FlowingSPDG/kairos-go/internals/objects"
 	"golang.org/x/xerrors"
 )
 
-func (k *kairosRestClient) GetAuxs(ctx context.Context) ([]*Aux, error) {
+func (k *kairosRestClient) GetAuxs(ctx context.Context) ([]*objects.AuxR, error) {
 	// エンドポイントの設定
-	ep := fmt.Sprintf("http://%s/aux", net.JoinHostPort(k.ip, k.port))
-	var payload []*Aux
+	ep := k.ep.Auxs()
+	var payload []*objects.AuxR
 	if err := doGET(ctx, k, ep, &payload); err != nil {
 		return nil, xerrors.Errorf("Failed to get inputs: %w", err)
 	}
@@ -19,16 +18,9 @@ func (k *kairosRestClient) GetAuxs(ctx context.Context) ([]*Aux, error) {
 	return payload, nil
 }
 
-type AuxIdentifier interface {
-	~int | ~string
-}
-
-func getAux[T AuxIdentifier](ctx context.Context, k *kairosRestClient, aux T) (*Aux, error) {
-	// input=id or number
-
-	// エンドポイントの設定
-	ep := fmt.Sprintf("http://%s/aux/%v", net.JoinHostPort(k.ip, k.port), aux)
-	var payload Aux
+func getAux[T AuxIdentifier](ctx context.Context, k *kairosRestClient, aux T) (*objects.AuxR, error) {
+	ep := endPointAux(k.ep, aux)
+	var payload objects.AuxR
 	if err := doGET(ctx, k, ep, &payload); err != nil {
 		return nil, xerrors.Errorf("Failed to get inputs: %w", err)
 	}
@@ -36,11 +28,11 @@ func getAux[T AuxIdentifier](ctx context.Context, k *kairosRestClient, aux T) (*
 	return &payload, nil
 }
 
-func (k *kairosRestClient) GetAuxByID(ctx context.Context, id string) (*Aux, error) {
+func (k *kairosRestClient) GetAuxByID(ctx context.Context, id string) (*objects.AuxR, error) {
 	return getAux(ctx, k, id)
 }
 
-func (k *kairosRestClient) GetAuxByNumber(ctx context.Context, number int) (*Aux, error) {
+func (k *kairosRestClient) GetAuxByNumber(ctx context.Context, number int) (*objects.AuxR, error) {
 	return getAux(ctx, k, number)
 }
 

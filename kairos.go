@@ -4,8 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 
+	"github.com/FlowingSPDG/kairos-go/internals/objects"
 	"golang.org/x/xerrors"
 )
 
@@ -13,31 +15,31 @@ import (
 // Currently version 1.4.0 is supported.
 type KairosRestClient interface {
 	// AUX
-	GetAuxByID(ctx context.Context, id string) (*Aux, error)
-	GetAuxByNumber(ctx context.Context, number int) (*Aux, error)
-	GetAuxs(ctx context.Context) ([]*Aux, error)
+	GetAuxByID(ctx context.Context, id string) (*objects.AuxR, error)
+	GetAuxByNumber(ctx context.Context, number int) (*objects.AuxR, error)
+	GetAuxs(ctx context.Context) ([]*objects.AuxR, error)
 	// PatchAux(ctx context.Context) error
 
 	// Inputs
-	GetInputByID(ctx context.Context, id string) (*Input, error)
-	GetInputByNumber(ctx context.Context, number int) (*Input, error)
-	GetInputs(ctx context.Context) ([]*Input, error)
+	GetInputByID(ctx context.Context, id string) (*objects.InputR, error)
+	GetInputByNumber(ctx context.Context, number int) (*objects.InputR, error)
+	GetInputs(ctx context.Context) ([]*objects.InputR, error)
 
 	// Macros
-	GetMacro(ctx context.Context, id string) (*Macro, error)
-	GetMacros(ctx context.Context) ([]*Macro, error)
+	GetMacro(ctx context.Context, id string) (*objects.MacroR, error)
+	GetMacros(ctx context.Context) ([]*objects.MacroR, error)
 	PatchMacro(ctx context.Context, macroUuid string, state string) error
 
 	// Multiviewers
-	GetMultiviewerByID(ctx context.Context, mv string) (*Multiviewer, error)
-	GetMultiviewerByNumber(ctx context.Context, mv int) (*Multiviewer, error)
-	GetMultiviewers(ctx context.Context) ([]*Multiviewer, error)
+	GetMultiviewerByID(ctx context.Context, mv string) (*objects.MultiviewerR, error)
+	GetMultiviewerByNumber(ctx context.Context, mv int) (*objects.MultiviewerR, error)
+	GetMultiviewers(ctx context.Context) ([]*objects.MultiviewerR, error)
 	// PatchMultiviewer(ctx context.Context) error
 
 	// Scenes
-	GetScene(ctx context.Context, scene string) (*Scene, error)
-	GetScenes(ctx context.Context) ([]*Scene, error)
-	PatchScene(ctx context.Context, sceneUuid string, layerUuid string, a string, b string, sources []string) error
+	GetScene(ctx context.Context, scene string) (*objects.SceneR, error)
+	GetScenes(ctx context.Context) ([]*objects.SceneR, error)
+	PatchScene(ctx context.Context, sceneUuid, layerUuid string, a, b *string, sources []string) error
 
 	// Snapshot
 	// PatchSnapshot(ctx context.Context) error
@@ -65,14 +67,20 @@ func NewKairosRestClient(ip string, port string, user, password string) KairosRe
 	}
 }
 
-func (k *kairosRestClient) setHeaders(req *http.Request) {
+func (k *kairosRestClient) setGetHeaders(req *http.Request) {
 	req.SetBasicAuth(k.user, k.password)
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
 }
 
-func (k *kairosRestClient) doRequest(req *http.Request, response any) error {
-	k.setHeaders(req)
+func (k *kairosRestClient) setPatchHeaders(req *http.Request) {
+	req.SetBasicAuth(k.user, k.password)
+	req.Header.Set("Content-Type", "application/json-patch+json")
+	req.Header.Set("Accept", "application/json")
+}
+
+func (k *kairosRestClient) doGetRequest(req *http.Request, response any) error {
+	k.setGetHeaders(req)
 
 	resp, err := k.c.Do(req)
 	if err != nil {
@@ -87,7 +95,21 @@ func (k *kairosRestClient) doRequest(req *http.Request, response any) error {
 	return nil
 }
 
-// TODO: エンドポイントを解決する関数を作成する
+func (k *kairosRestClient) doPatchRequest(req *http.Request, response any) error {
+	k.setPatchHeaders(req)
+
+	resp, err := k.c.Do(req)
+	if err != nil {
+		return xerrors.Errorf("Failed to do request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if err := json.NewDecoder(resp.Body).Decode(response); err != nil {
+		return err
+	}
+
+	return nil
+}
 
 func doGET[T any](ctx context.Context, k *kairosRestClient, endpoint string, v *T) error {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
@@ -95,7 +117,7 @@ func doGET[T any](ctx context.Context, k *kairosRestClient, endpoint string, v *
 		return xerrors.Errorf("Failed to create request: %w", err)
 	}
 
-	if err := k.doRequest(req, &v); err != nil {
+	if err := k.doGetRequest(req, &v); err != nil {
 		return xerrors.Errorf("Failed to do request: %w", err)
 	}
 	fmt.Printf("Payload: %+v\n", v)
@@ -103,4 +125,16 @@ func doGET[T any](ctx context.Context, k *kairosRestClient, endpoint string, v *
 	return nil
 }
 
-// TODO: doPatch
+func doPATCH[T any](ctx context.Context, k *kairosRestClient, endpoint string, body io.Reader, v *T) error {
+	req, err := http.NewRequestWithContext(ctx, http.MethodPatch, endpoint, body)
+	if err != nil {
+		return xerrors.Errorf("Failed to create request: %w", err)
+	}
+
+	if err := k.doPatchRequest(req, &v); err != nil {
+		return xerrors.Errorf("Failed to do request: %w", err)
+	}
+	fmt.Printf("Payload: %+v\n", v)
+
+	return nil
+}

@@ -5,15 +5,15 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"net"
-	"net/http"
+	"path"
 
+	"github.com/FlowingSPDG/kairos-go/internals/objects"
 	"golang.org/x/xerrors"
 )
 
-func (k *kairosRestClient) GetScenes(ctx context.Context) ([]*Scene, error) {
+func (k *kairosRestClient) GetScenes(ctx context.Context) ([]*objects.SceneR, error) {
 	ep := k.ep.Scenes()
-	var payload []*Scene
+	var payload []*objects.SceneR
 	if err := doGET(ctx, k, ep, &payload); err != nil {
 		return nil, xerrors.Errorf("Failed to get inputs: %w", err)
 	}
@@ -21,9 +21,9 @@ func (k *kairosRestClient) GetScenes(ctx context.Context) ([]*Scene, error) {
 	return payload, nil
 }
 
-func (k *kairosRestClient) GetScene(ctx context.Context, scene string) (*Scene, error) {
+func (k *kairosRestClient) GetScene(ctx context.Context, scene string) (*objects.SceneR, error) {
 	ep := k.ep.Scene(scene)
-	var payload Scene
+	var payload objects.SceneR
 	if err := doGET(ctx, k, ep, &payload); err != nil {
 		return nil, xerrors.Errorf("Failed to get inputs: %w", err)
 	}
@@ -31,41 +31,17 @@ func (k *kairosRestClient) GetScene(ctx context.Context, scene string) (*Scene, 
 	return &payload, nil
 }
 
-type patchSceneRequestPayload struct {
-	Name    string   `json:"name"`
-	SourceA string   `json:"sourceA"`
-	SourceB string   `json:"sourceB"`
-	Sources []string `json:"sources"`
-	UUID    string   `json:"uuid"` // Layer uuid
-}
-
-type patchSceneResponsePayload struct {
-	Code int    `json:"code"`
-	Text string `json:"text"`
-}
-
-func (k *kairosRestClient) PatchScene(ctx context.Context, sceneUuid, layerUuid, a, b string, sources []string) error {
-	payload := patchSceneRequestPayload{
-		Name:    "Background",
-		SourceA: a,
-		SourceB: b,
-		Sources: sources,
-		UUID:    layerUuid,
-	}
+func (k *kairosRestClient) PatchScene(ctx context.Context, sceneUuid, layerUuid string, a, b *string, sources []string) error {
+	payload := objects.NewLayerWritePayload(a, b)
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(payload); err != nil {
 		return xerrors.Errorf("Failed to encode payload: %w", err)
 	}
 
 	// TODO: ep
-	ep := fmt.Sprintf("http://%s/scenes/%s/%s", net.JoinHostPort(k.ip, k.port), sceneUuid, layerUuid)
-	req, err := http.NewRequestWithContext(ctx, http.MethodPatch, ep, &buf)
-	if err != nil {
-		return xerrors.Errorf("Failed to create request: %w", err)
-	}
-
-	var response patchSceneResponsePayload
-	if err := k.doRequest(req, &response); err != nil {
+	ep := path.Join(k.ep.Scene(sceneUuid), layerUuid)
+	var response objects.PatchResponsePayload
+	if err := doPATCH(ctx, k, ep, &buf, &response); err != nil {
 		return xerrors.Errorf("Failed to do request: %w", err)
 	}
 	fmt.Printf("Payload: %+v\n", payload)

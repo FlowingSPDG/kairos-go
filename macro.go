@@ -5,14 +5,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"net/http"
 
+	"github.com/FlowingSPDG/kairos-go/internals/objects"
 	"golang.org/x/xerrors"
 )
 
-func (k *kairosRestClient) GetMacros(ctx context.Context) ([]*Macro, error) {
+func (k *kairosRestClient) GetMacros(ctx context.Context) ([]*objects.MacroR, error) {
 	ep := k.ep.Macros()
-	var payload []*Macro
+	var payload []*objects.MacroR
 	if err := doGET(ctx, k, ep, &payload); err != nil {
 		return nil, xerrors.Errorf("Failed to get inputs: %w", err)
 	}
@@ -20,9 +20,9 @@ func (k *kairosRestClient) GetMacros(ctx context.Context) ([]*Macro, error) {
 	return payload, nil
 }
 
-func (k *kairosRestClient) GetMacro(ctx context.Context, id string) (*Macro, error) {
+func (k *kairosRestClient) GetMacro(ctx context.Context, id string) (*objects.MacroR, error) {
 	ep := k.ep.Macro(id)
-	var payload Macro
+	var payload objects.MacroR
 	if err := doGET(ctx, k, ep, &payload); err != nil {
 		return nil, xerrors.Errorf("Failed to get inputs: %w", err)
 	}
@@ -30,17 +30,8 @@ func (k *kairosRestClient) GetMacro(ctx context.Context, id string) (*Macro, err
 	return &payload, nil
 }
 
-type patchMacroRequestPayload struct {
-	State string `json:"state"` // play only??
-}
-
-type patchMacroResponsePayload struct {
-	Code int    `json:"code"`
-	Text string `json:"text"`
-}
-
 func (k *kairosRestClient) PatchMacro(ctx context.Context, macroUuid, state string) error {
-	payload := patchMacroRequestPayload{
+	payload := objects.MacroW{
 		State: state,
 	}
 	var buf bytes.Buffer
@@ -49,13 +40,8 @@ func (k *kairosRestClient) PatchMacro(ctx context.Context, macroUuid, state stri
 	}
 
 	ep := k.ep.Macro(macroUuid)
-	req, err := http.NewRequestWithContext(ctx, http.MethodPatch, ep, &buf)
-	if err != nil {
-		return xerrors.Errorf("Failed to create request: %w", err)
-	}
-
-	var response patchMacroResponsePayload
-	if err := k.doRequest(req, &response); err != nil {
+	var response objects.PatchResponsePayload
+	if err := doPATCH(ctx, k, ep, &buf, &response); err != nil {
 		return xerrors.Errorf("Failed to do request: %w", err)
 	}
 	fmt.Printf("Payload: %+v\n", payload)
