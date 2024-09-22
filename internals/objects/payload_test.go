@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/pixelbender/go-sdp/sdp"
+	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -17,13 +18,14 @@ type testCase[TIn, TOut any] struct {
 
 func testUnmarshalJSON[T any](t *testing.T, incoming []byte, expected T) {
 	actual := *new(T)
-	if err := json.Unmarshal(incoming, &actual); err != nil {
-		t.Fatalf("Failed to Unmarshal JSON:%v", err)
-	}
+	err := json.Unmarshal(incoming, &actual)
+	assert.NoError(t, err)
 	assert.Equal(t, expected, actual)
 }
 
 func assertUnmarshalJSON[TIn ~string, TOut any](t *testing.T, tcs []testCase[TIn, TOut]) {
+	t.Helper()
+	// TODO: use tc.Error
 	for _, tc := range tcs {
 		t.Run(tc.Name, func(t *testing.T) {
 			testUnmarshalJSON(t, []byte(tc.Input), tc.Expected)
@@ -779,5 +781,259 @@ func TestUnmarshalMultiviewerR(t *testing.T) {
 	assertUnmarshalJSON(t, tcs)
 }
 
-//func TestUnmarshalSceneRs
-//func TestUnmarshalSceneR
+func TestUnmarshalSceneRs(t *testing.T) {
+	t.Parallel()
+	tcs := []testCase[string, []*SceneR]{
+		{
+			Name:     "Empty",
+			Input:    "[]",
+			Expected: []*SceneR{},
+			Error:    nil,
+		},
+		{
+			Name: "Example on API document",
+			Input: `[
+{
+"layers": [
+{
+"name": "Background",
+"sourceA": "Black",
+"sourceB": "Black",
+"sources": [
+"Black"
+],
+"uuid": "ce412da9-e248-567a-a8e0-2ec65739623c"
+},
+{
+"name": "Layer-1",
+"sourceA": "Black",
+"sources": [
+"Black",
+"White"
+],
+"uuid": "61508e94-fefb-5892-99e1-9c327e2149d6"
+},
+{
+"name": "Layer-2",
+"sourceA": "Black",
+"sources": [
+"Black",
+"White"
+],
+"uuid": "93ddd7c7-752f-505f-8e62-444ffc86428c"
+}
+],
+"macros":[
+{
+"color":"rgb(255,255,255)",
+"name":"M-1",
+"state":null,
+"uuid":"8a3b3030-4e1f-5bdb-ac1a-933daa1aab4d"
+}
+],
+"name": "Main",
+"snapshots":[
+{
+"name":"SNP1",
+"state":null,
+"uuid":"71877642-9f40-5947-9deb-1d6bde1da0a9"
+}
+],
+"tally": 1,
+"uuid": "f1a5c030-e1a3-5b01-97e0-8a18b16ab1d3"
+}
+] 
+`,
+			Expected: []*SceneR{
+				{
+					base: base{
+						UUID: "f1a5c030-e1a3-5b01-97e0-8a18b16ab1d3",
+					},
+					Name:  "Main",
+					Tally: 1,
+					Layers: []LayerR{
+						{
+							base: base{
+								UUID: "ce412da9-e248-567a-a8e0-2ec65739623c",
+							},
+							Name: "Background",
+							layerCommon: layerCommon{
+								SourceA: lo.ToPtr("Black"),
+								SourceB: lo.ToPtr("Black"),
+							},
+							Sources: []string{"Black"},
+						},
+						{
+							base: base{
+								UUID: "61508e94-fefb-5892-99e1-9c327e2149d6",
+							},
+							Name: "Layer-1",
+							layerCommon: layerCommon{
+								SourceA: lo.ToPtr("Black"),
+								SourceB: nil,
+							},
+							Sources: []string{"Black", "White"},
+						},
+						{
+							base: base{
+								UUID: "93ddd7c7-752f-505f-8e62-444ffc86428c",
+							},
+							Name: "Layer-2",
+							layerCommon: layerCommon{
+								SourceA: lo.ToPtr("Black"),
+								SourceB: nil,
+							},
+							Sources: []string{"Black", "White"},
+						},
+					},
+					Macros: []MacroR{
+						{
+							base: base{
+								UUID: "8a3b3030-4e1f-5bdb-ac1a-933daa1aab4d",
+							},
+							Color: "rgb(255,255,255)",
+							Name:  "M-1",
+						},
+					},
+					Snapshots: []SnapshotR{
+						{
+							base: base{
+								UUID: "71877642-9f40-5947-9deb-1d6bde1da0a9",
+							},
+							Name: "SNP1",
+						},
+					},
+				},
+			},
+			Error: nil,
+		},
+	}
+
+	assertUnmarshalJSON(t, tcs)
+}
+
+func TestUnmarshalSceneR(t *testing.T) {
+	t.Parallel()
+	tcs := []testCase[string, SceneR]{
+		{
+			Name:     "Empty",
+			Input:    "{}",
+			Expected: SceneR{},
+			Error:    nil,
+		},
+		{
+			Name: "Example on API document",
+			Input: `{
+"layers": [
+{
+"name": "Background",
+"sourceA": "Black",
+"sourceB": "Black",
+"sources": [
+"Black"
+],
+"uuid": "ce412da9-e248-567a-a8e0-2ec65739623c"
+},
+{
+"name": "Layer-1",
+"sourceA": "Black",
+"sources": [
+"Black",
+"White"
+],
+"uuid": "61508e94-fefb-5892-99e1-9c327e2149d6"
+},
+{
+"name": "Layer-2",
+"sourceA": "Black",
+"sources": [
+"Black",
+"White"
+],
+"uuid": "93ddd7c7-752f-505f-8e62-444ffc86428c"
+}
+],
+"macros":[
+{
+"color":"rgb(255,255,255)",
+"name":"M-1",
+"state":null,
+"uuid":"8a3b3030-4e1f-5bdb-ac1a-933daa1aab4d"
+}
+],
+"name": "Main",
+"snapshots":[
+{
+"name":"SNP1", 
+"state":null,
+"uuid":"71877642-9f40-5947-9deb-1d6bde1da0a9"
+}
+],
+"tally": 1,
+"uuid": "f1a5c030-e1a3-5b01-97e0-8a18b16ab1d3"
+}`,
+			Expected: SceneR{
+				base: base{
+					UUID: "f1a5c030-e1a3-5b01-97e0-8a18b16ab1d3",
+				},
+				Name:  "Main",
+				Tally: 1,
+				Layers: []LayerR{
+					{
+						base: base{
+							UUID: "ce412da9-e248-567a-a8e0-2ec65739623c",
+						},
+						Name: "Background",
+						layerCommon: layerCommon{
+							SourceA: lo.ToPtr("Black"),
+							SourceB: lo.ToPtr("Black"),
+						},
+						Sources: []string{"Black"},
+					},
+					{
+						base: base{
+							UUID: "61508e94-fefb-5892-99e1-9c327e2149d6",
+						},
+						Name: "Layer-1",
+						layerCommon: layerCommon{
+							SourceA: lo.ToPtr("Black"),
+							SourceB: nil,
+						},
+						Sources: []string{"Black", "White"},
+					},
+					{
+						base: base{
+							UUID: "93ddd7c7-752f-505f-8e62-444ffc86428c",
+						},
+						Name: "Layer-2",
+						layerCommon: layerCommon{
+							SourceA: lo.ToPtr("Black"),
+							SourceB: nil,
+						},
+						Sources: []string{"Black", "White"},
+					},
+				},
+				Macros: []MacroR{
+					{
+						base: base{
+							UUID: "8a3b3030-4e1f-5bdb-ac1a-933daa1aab4d",
+						},
+						Color: "rgb(255,255,255)",
+						Name:  "M-1",
+					},
+				},
+				Snapshots: []SnapshotR{
+					{
+						base: base{
+							UUID: "71877642-9f40-5947-9deb-1d6bde1da0a9",
+						},
+						Name: "SNP1",
+					},
+				},
+			},
+			Error: nil,
+		},
+	}
+
+	assertUnmarshalJSON(t, tcs)
+}

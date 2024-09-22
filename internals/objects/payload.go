@@ -46,7 +46,7 @@ type SnapshotR struct {
 }
 
 type SnapshotW struct {
-	State any
+	State any `json:"state"` // "play" or "recall"?
 }
 
 type InputR struct {
