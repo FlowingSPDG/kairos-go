@@ -1,5 +1,7 @@
 package objects
 
+import "encoding/json"
+
 // HOLY FUDGE WHAT THE HELL IS WRONG WITH KAIROS "OFFICIAL" API DOCUMENTS
 
 type base struct {
@@ -98,6 +100,13 @@ type MultiviewerR struct {
 	Name    string               `json:"name"`
 	Presets []MultiviewerPresetR `json:"presets"`
 	SDP     *SDP                 `json:"sdp"`
+}
+
+func (m *MultiviewerR) UnmarshalJSON(b []byte) (err error) {
+	// HACK:
+	// Since SDP has UnmarshalJSON() method, it is required to re-define UnmarshalJSON()
+	// to prevent calling m.*SDP.UnmarshalJSON() as m.UnmarshalJSON()
+	return json.Unmarshal(b, m)
 }
 
 type MultiviewerW struct {
