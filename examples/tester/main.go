@@ -82,8 +82,19 @@ func testAuxMethods(ctx context.Context, kc kairos.KairosRestClient) (result *mu
 	}
 
 	// Get Aux
-	// TODO...
-	_ = auxs
+	for _, aux := range auxs {
+		// test by ID
+		_, err := kc.GetAuxByID(ctx, aux.UUID)
+		if err != nil {
+			result = multierror.Append(result, err)
+		}
+
+		// test by number
+		_, err = kc.GetAuxByNumber(ctx, aux.Index)
+		if err != nil {
+			result = multierror.Append(result)
+		}
+	}
 	return
 }
 
@@ -136,8 +147,19 @@ func testMultiviewers(ctx context.Context, kc kairos.KairosRestClient) (result *
 	}
 
 	// Get Multiviewer
-	// TODO...
-	_ = multiviewers
+	for _, multiview := range multiviewers {
+		// test by ID
+		_, err := kc.GetMultiviewerByID(ctx, multiview.UUID)
+		if err != nil {
+			result = multierror.Append(result, err)
+		}
+
+		// test by number
+		_, err = kc.GetAuxByNumber(ctx, multiview.Index)
+		if err != nil {
+			result = multierror.Append(result, err)
+		}
+	}
 	return
 }
 
