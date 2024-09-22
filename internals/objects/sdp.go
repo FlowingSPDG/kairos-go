@@ -13,6 +13,7 @@ type SDP struct {
 	raw *sdp.Session
 }
 
+//nolint:ineffassign,staticcheck
 func (s *SDP) UnmarshalJSON(b []byte) (err error) {
 	s, err = parseSDP(b)
 	if err != nil {
@@ -27,15 +28,6 @@ func (s *SDP) Raw() *sdp.Session {
 
 func parseSDP(b []byte) (*SDP, error) {
 	s, err := sdp.Parse(b)
-	if err != nil {
-		return nil, xerrors.Errorf("failed to parse SDP: %w", err)
-	}
-	return &SDP{
-		raw: s,
-	}, nil
-}
-func parseSDPStr(str string) (*SDP, error) {
-	s, err := sdp.ParseString(str)
 	if err != nil {
 		return nil, xerrors.Errorf("failed to parse SDP: %w", err)
 	}
