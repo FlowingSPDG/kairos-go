@@ -31,11 +31,11 @@ func (s *SDP) Raw() *sdp.Session {
 func parseSDP(b []byte) (*SDP, error) {
 	// Replace new line
 	bs := strings.ReplaceAll(string(b), "\\n", "\n")
-	// remove last line
-	bs = strings.TrimSuffix(bs, "\n")
 	// remove double quotes
 	bs = strings.TrimLeft(bs, `"`)
 	bs = strings.TrimRight(bs, `"`)
+	// remove last line
+	bs = strings.TrimSuffix(bs, "\n")
 	s, err := sdp.ParseString(bs)
 	if err != nil {
 		return nil, xerrors.Errorf("failed to parse SDP: %w", err)
