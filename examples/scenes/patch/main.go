@@ -41,7 +41,7 @@ func main() {
 	pgmSources := pgmLayer.Sources // Main Layer[0] Sources(scenes)
 
 	fmt.Println("Switching PGM")
-	for i, source := range pgmSources {
+	for i, pgm := range pgmSources {
 		// get preview source
 		prv := pgmSources[i]
 		if i != len(pgmSources) && i != 0 {
@@ -49,7 +49,7 @@ func main() {
 		}
 
 		// patch scene
-		if err := kc.PatchScene(ctx, pgmScene.UUID, pgmLayer.UUID, &prv, &source, pgmSources); err != nil {
+		if err := kc.PatchScene(ctx, pgmScene.UUID, pgmLayer.UUID, &prv, &pgm); err != nil {
 			panic(err)
 		}
 

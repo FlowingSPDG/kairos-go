@@ -31,7 +31,7 @@ func (k *kairosRestClient) GetScene(ctx context.Context, scene string) (*objects
 	return &payload, nil
 }
 
-func (k *kairosRestClient) PatchScene(ctx context.Context, sceneUuid, layerUuid string, a, b *string, sources []string) error {
+func (k *kairosRestClient) PatchScene(ctx context.Context, sceneUuid, layerUuid string, a, b *string) error {
 	payload := objects.NewLayerWritePayload(a, b)
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(payload); err != nil {

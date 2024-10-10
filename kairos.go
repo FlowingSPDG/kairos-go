@@ -39,7 +39,7 @@ type KairosRestClient interface {
 	// Scenes
 	GetScene(ctx context.Context, scene string) (*objects.SceneR, error)
 	GetScenes(ctx context.Context) ([]*objects.SceneR, error)
-	PatchScene(ctx context.Context, sceneUuid, layerUuid string, a, b *string, sources []string) error
+	PatchScene(ctx context.Context, sceneUuid, layerUuid string, a, b *string) error
 
 	// Snapshot
 	// PatchSnapshot(ctx context.Context) error
