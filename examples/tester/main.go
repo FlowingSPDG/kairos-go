@@ -64,13 +64,14 @@ func main() {
 	}
 	log.Println("Scenesのテストが完了しました。 エラー:", sceneErrors)
 
-	if errs != nil {
-		log.Printf("テストに失敗しました。 \nエラー総数: %d", errs.Len())
-		for i, err := range errs.Errors {
-			log.Printf("エラー[%d]: %s", i, err.Error())
-		}
-	} else {
+	if errs == nil {
 		log.Println("全てのテストが成功しました。")
+		return
+	}
+
+	log.Printf("テストに失敗しました。 \nエラー総数: %d", errs.Len())
+	for i, err := range errs.Errors {
+		log.Printf("エラー[%d]: %s", i, err.Error())
 	}
 }
 
