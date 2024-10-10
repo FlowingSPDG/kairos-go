@@ -1,20 +1,29 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
+	"os/signal"
 	"time"
 
 	"github.com/FlowingSPDG/kairos-go"
 )
 
+var (
+	ip       = os.Getenv("KAIROS_IP")
+	port     = os.Getenv("KAIROS_PORT")
+	user     = os.Getenv("KAIROS_USER")
+	password = os.Getenv("KAIROS_PASSWORD")
+)
+
 func main() {
-	user := os.Getenv("KAIROS_USER")
-	password := os.Getenv("KAIROS_PASSWORD")
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer stop()
 
-	kc := kairos.NewKairosRestClient("192.168.10.10", user, password)
+	kc := kairos.NewKairosRestClient(ip, port, user, password)
 
-	scenes, err := kc.GetScene()
+	scenes, err := kc.GetScenes(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -32,7 +41,7 @@ func main() {
 	pgmSources := pgmLayer.Sources // Main Layer[0] Sources(scenes)
 
 	fmt.Println("Switching PGM")
-	for i, source := range pgmSources {
+	for i, pgm := range pgmSources {
 		// get preview source
 		prv := pgmSources[i]
 		if i != len(pgmSources) && i != 0 {
@@ -40,7 +49,7 @@ func main() {
 		}
 
 		// patch scene
-		if err := kc.PatchScene(pgmScene.UUID, pgmLayer.UUID, prv, source, pgmSources); err != nil {
+		if err := kc.PatchScene(ctx, pgmScene.UUID, pgmLayer.UUID, &prv, &pgm); err != nil {
 			panic(err)
 		}
 
