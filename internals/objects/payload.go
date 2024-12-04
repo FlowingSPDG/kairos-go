@@ -56,13 +56,19 @@ type InputR struct {
 	Tally int    `json:"tally"`
 }
 
+type Action struct {
+	base
+	Name  string `json:"name"`
+	State any    `json:"state"`
+}
+
 type SceneR struct {
 	base
-	Name   string   `json:"name"`
-	Tally  int      `json:"tally"`
-	Layers []LayerR `json:"layers"`
-
-	// following fields are not documented
+	Actions   []Action    `json:"actions"`
+	Name      string      `json:"name"`
+	Path      string      `json:"path"`
+	Tally     int         `json:"tally"`
+	Layers    []LayerR    `json:"layers"`
 	Macros    []MacroR    `json:"macros"`    // R?
 	Snapshots []SnapshotR `json:"snapshots"` // R?
 }
@@ -74,8 +80,8 @@ type layerCommon struct {
 
 type LayerR struct {
 	base
-	Name string `json:"name"`
 	layerCommon
+	Name    string   `json:"name"`
 	Sources []string `json:"sources"`
 }
 

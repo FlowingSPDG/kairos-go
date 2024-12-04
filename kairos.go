@@ -11,8 +11,10 @@ import (
 	"golang.org/x/xerrors"
 )
 
+const KairosVersion = "1.7"
+
 // KairosRestClient is an interface to communicate with Panasonic Kairos.
-// Currently version 1.4.0 is supported.
+// Currently version 1.7 is supported.
 type KairosRestClient interface {
 	// AUX
 	GetAuxByID(ctx context.Context, id string) (*objects.AuxR, error)
@@ -42,7 +44,11 @@ type KairosRestClient interface {
 	PatchScene(ctx context.Context, sceneUuid, layerUuid string, a, b *string) error
 
 	// Snapshot
-	// PatchSnapshot(ctx context.Context) error
+	PatchSnapshotByID(ctx context.Context, id string, state string) error
+	PatchSnapshotByUUID(ctx context.Context, uuid string, state string) error
+
+	// Actions
+	PatchAction(ctx context.Context, actionUuid, state string) error
 }
 
 type kairosRestClient struct {
