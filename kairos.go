@@ -11,10 +11,10 @@ import (
 	"golang.org/x/xerrors"
 )
 
-const KairosVersion = "1.7"
+const KairosVersion = "1.7.3"
 
 // KairosRestClient is an interface to communicate with Panasonic Kairos.
-// Currently version 1.7 is supported.
+// Currently version 1.7.3 is supported.
 type KairosRestClient interface {
 	// AUX
 	GetAuxByID(ctx context.Context, id string) (*objects.AuxR, error)
